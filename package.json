@@ -1,5 +1,5 @@
 {
-  "name": "@agrune/test-page",
+  "name": "agrune-demo",
   "private": true,
   "version": "0.0.0",
   "type": "module",
