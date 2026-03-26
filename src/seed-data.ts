@@ -1,4 +1,5 @@
-import type { Task, Member } from './types'
+import type { Task, Member, WorkflowNodeData } from './types'
+import type { Node, Edge } from '@xyflow/react'
 
 export const SEED_TASKS: Task[] = [
   {
@@ -304,4 +305,69 @@ export const SEED_MEMBERS: Member[] = [
     joinedAt: '2025-09-05',
     avatar: 'VS',
   },
+]
+
+export const SEED_WORKFLOW_NODES: Node<WorkflowNodeData>[] = [
+  // Stage nodes — 메인 워크플로우
+  {
+    id: 'planning',
+    type: 'stage',
+    position: { x: 50, y: 200 },
+    data: { label: '기획', description: '요구사항 분석 및 기획' },
+  },
+  {
+    id: 'design',
+    type: 'stage',
+    position: { x: 250, y: 200 },
+    data: { label: '디자인', description: 'UI/UX 디자인' },
+  },
+  {
+    id: 'dev',
+    type: 'stage',
+    position: { x: 450, y: 200 },
+    data: { label: '개발', description: '기능 구현' },
+  },
+  {
+    id: 'review',
+    type: 'stage',
+    position: { x: 650, y: 200 },
+    data: { label: '코드 리뷰', description: 'PR 리뷰 및 피드백' },
+  },
+  {
+    id: 'qa',
+    type: 'stage',
+    position: { x: 850, y: 200 },
+    data: { label: 'QA 테스트', description: '품질 검증' },
+  },
+  {
+    id: 'deploy',
+    type: 'stage',
+    position: { x: 1050, y: 200 },
+    data: { label: '배포', description: '프로덕션 배포' },
+  },
+  // Task nodes — 의도적으로 겹치게 배치
+  {
+    id: 'labeling',
+    type: 'task',
+    position: { x: 860, y: 190 },
+    data: { label: '라벨링', description: '데이터 라벨링 작업' },
+  },
+  {
+    id: 'monitoring',
+    type: 'task',
+    position: { x: 1060, y: 210 },
+    data: { label: '모니터링', description: '서비스 모니터링 설정' },
+  },
+]
+
+export const SEED_WORKFLOW_EDGES: Edge[] = [
+  // 메인 플로우
+  { id: 'e-planning-design', source: 'planning', target: 'design' },
+  { id: 'e-design-dev', source: 'design', target: 'dev' },
+  { id: 'e-dev-review', source: 'dev', target: 'review' },
+  { id: 'e-review-qa', source: 'review', target: 'qa' },
+  { id: 'e-qa-deploy', source: 'qa', target: 'deploy' },
+  // 분기
+  { id: 'e-dev-labeling', source: 'dev', target: 'labeling', style: { strokeDasharray: '5 5' } },
+  { id: 'e-qa-monitoring', source: 'qa', target: 'monitoring', style: { strokeDasharray: '5 5' } },
 ]

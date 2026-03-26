@@ -78,3 +78,8 @@ export const ROLE_COLORS: Record<Member['role'], string> = {
   designer: 'bg-purple-100 text-purple-700',
   qa: 'bg-green-100 text-green-700',
 }
+
+export interface WorkflowNodeData extends Record<string, unknown> {
+  label: string
+  description: string
+}
