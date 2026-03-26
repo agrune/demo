@@ -6,7 +6,9 @@ import { MemberTable } from '@/components/features/MemberTable'
 import { DocumentViewer } from '@/components/features/DocumentViewer'
 import { useLocalStorage } from '@/hooks/useLocalStorage'
 import { SEED_TASKS, SEED_MEMBERS } from '@/seed-data'
-import { LayoutDashboard, KanbanSquare, Users, FileText } from 'lucide-react'
+import { LayoutDashboard, KanbanSquare, Users, FileText, Workflow } from 'lucide-react'
+import { WorkflowEditor } from '@/components/features/WorkflowEditor'
+import { SEED_WORKFLOW_NODES, SEED_WORKFLOW_EDGES } from '@/seed-data'
 import type { Task, Member } from '@/types'
 
 function App() {
@@ -50,7 +52,7 @@ function App() {
       {/* Main Content */}
       <main className="max-w-[1400px] mx-auto px-6 py-6">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full max-w-md grid-cols-3">
+          <TabsList className="grid w-full max-w-md grid-cols-4">
             <TabsTrigger value="board" className="gap-1.5">
               <KanbanSquare className="h-4 w-4" />
               Board
@@ -62,6 +64,10 @@ function App() {
             <TabsTrigger value="docs" className="gap-1.5">
               <FileText className="h-4 w-4" />
               Docs
+            </TabsTrigger>
+            <TabsTrigger value="workflow" className="gap-1.5">
+              <Workflow className="h-4 w-4" />
+              Workflow
             </TabsTrigger>
           </TabsList>
 
@@ -80,6 +86,13 @@ function App() {
 
           <TabsContent value="docs">
             <DocumentViewer />
+          </TabsContent>
+
+          <TabsContent value="workflow">
+            <WorkflowEditor
+              initialNodes={SEED_WORKFLOW_NODES}
+              initialEdges={SEED_WORKFLOW_EDGES}
+            />
           </TabsContent>
         </Tabs>
       </main>
