@@ -205,12 +205,7 @@ export function WorkflowEditor({ initialNodes, initialEdges }: WorkflowEditorPro
         </CardDescription>
       </CardHeader>
       <CardContent className="p-0">
-        <div
-          className="h-[600px] w-full"
-          data-agrune-group="workflow-canvas"
-          data-agrune-group-name="워크플로우 캔버스"
-          data-agrune-group-desc="태스크 워크플로우를 시각적으로 편집하는 노드 에디터 캔버스"
-        >
+        <div className="h-[600px] w-full">
           <ReactFlow
             nodes={nodes}
             edges={edges}
