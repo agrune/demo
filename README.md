@@ -1,24 +1,173 @@
-# @agrune/test-page
+# agrune-demo
 
-`agrune` 개발용 검증 앱이다.
+`agrune` 브라우저 자동화 프레임워크의 기능을 검증하기 위한 데모 웹 애플리케이션이다. 프로젝트 관리 도구(Project Manager)를 모방한 React SPA로, 칸반 보드 / 팀 멤버 관리 / 문서 뷰어 등 실제 서비스에서 볼 수 있는 다양한 UI 패턴을 포함하고 있다. 모든 인터랙티브 요소에는 `data-agrune-*` 어노테이션이 부착되어 있어, agrune 확장 프로그램과 MCP 서버가 탭/그룹/타깃 정보를 자동 수집할 수 있도록 설계되었다.
 
-## 실행
+## 기술 스택
+
+| 분류 | 기술 | 버전 |
+|------|------|------|
+| 런타임 | React | 19 |
+| 빌드 도구 | Vite | 7 |
+| 언어 | TypeScript | 5.9 |
+| 스타일링 | Tailwind CSS | 4 (Vite 플러그인) |
+| UI 컴포넌트 | Radix UI (Dialog, Select, Tabs, Label, Separator, Progress) | - |
+| 유틸리티 | class-variance-authority, clsx, tailwind-merge, lucide-react | - |
+| 린터 | ESLint 9 (flat config) + typescript-eslint + react-hooks + react-refresh | - |
+| 패키지 매니저 | pnpm | - |
+
+## 사전 요구 사항
+
+- **Node.js** 18 이상
+- **pnpm** (권장, `pnpm-lock.yaml` 기반)
+
+## 설치 및 실행
 
 ```bash
-pnpm -C apps/cli-test-page dev
+# 의존성 설치
+pnpm install
+
+# 개발 서버 실행 (기본: http://localhost:5173)
+pnpm dev
 ```
 
-확장 프로그램과 MCP 설치는 루트에서 준비한다.
+### agrune 확장 프로그램과 함께 사용하기
+
+agrune 모노레포 루트에서 확장 프로그램과 MCP 서버를 먼저 설치한다.
 
 ```bash
+# 모노레포 루트에서
 pnpm install
 pnpm dlx tsx packages/mcp-server/bin/agrune-mcp.ts install
 ```
 
-그다음 `chrome://extensions`에서 `~/.agrune/extension/`을 로드하고 이 앱을 열어 검증한다.
+이후 `chrome://extensions`에서 `~/.agrune/extension/` 디렉터리를 로드하고, 이 데모 앱을 열어 검증한다.
 
-## 포인트
+## 스크립트
 
-- React UI 위에 `data-agrune-*` 어노테이션이 붙어 있다.
-- 확장 프로그램이 탭, 그룹, 타깃 정보를 자동 수집한다.
+| 명령어 | 설명 |
+|--------|------|
+| `pnpm dev` | Vite 개발 서버 실행 |
+| `pnpm build` | TypeScript 타입 체크 후 프로덕션 빌드 (`dist/` 생성) |
+| `pnpm typecheck` | TypeScript 타입 체크만 실행 (`tsc -b`) |
+| `pnpm lint` | ESLint 실행 |
+| `pnpm preview` | 빌드 결과물을 로컬에서 프리뷰 |
+
+## 프로젝트 구조
+
+```
+agrune-demo/
+├── index.html                     # 앱 엔트리 HTML
+├── vite.config.ts                 # Vite 설정 (React SWC, Tailwind, agrune 어노테이션 린트 플러그인)
+├── tsconfig.json                  # TypeScript 프로젝트 레퍼런스
+├── tsconfig.app.json              # 앱 소스 TypeScript 설정
+├── tsconfig.node.json             # Node (Vite 설정) TypeScript 설정
+├── eslint.config.js               # ESLint flat config
+├── package.json
+├── pnpm-lock.yaml
+├── public/
+│   ├── vite.svg                   # 파비콘
+│   └── docs/                      # iframe으로 로드되는 정적 HTML 문서
+│       ├── project-overview.html
+│       ├── api-reference.html
+│       ├── getting-started.html
+│       └── meeting-notes.html
+└── src/
+    ├── main.tsx                   # React 엔트리포인트
+    ├── App.tsx                    # 루트 컴포넌트 (탭 네비게이션, 상태 관리)
+    ├── types.ts                   # Task, Member 등 타입 및 상수 정의
+    ├── seed-data.ts               # 시드 데이터 (8개 태스크, 22명 멤버)
+    ├── index.css                  # Tailwind CSS + shadcn/ui 테마 변수 (라이트/다크)
+    ├── lib/
+    │   └── utils.ts               # cn() 유틸리티 (clsx + tailwind-merge)
+    ├── hooks/
+    │   └── useLocalStorage.ts     # localStorage 기반 상태 영속화 훅
+    └── components/
+        ├── ui/                    # shadcn/ui 기반 공통 UI 컴포넌트
+        │   ├── badge.tsx
+        │   ├── button.tsx
+        │   ├── card.tsx
+        │   ├── dialog.tsx
+        │   ├── input.tsx
+        │   ├── label.tsx
+        │   ├── progress.tsx
+        │   ├── select.tsx
+        │   ├── separator.tsx
+        │   ├── table.tsx
+        │   ├── tabs.tsx
+        │   └── textarea.tsx
+        └── features/              # 기능별 컴포넌트
+            ├── KanbanBoard.tsx    # 칸반 보드 (드래그 앤 드롭)
+            ├── TaskWizard.tsx     # 새 태스크 생성 마법사 (3단계)
+            ├── TaskDetailDialog.tsx # 태스크 상세 보기/편집 다이얼로그
+            ├── MemberTable.tsx    # 팀 멤버 테이블 (검색, 필터, 페이지네이션)
+            └── DocumentViewer.tsx # 문서 뷰어 (iframe 기반)
+```
+
+## 주요 기능
+
+### 1. 칸반 보드 (Board 탭)
+
+- **4개 컬럼**: To Do, In Progress, In Review, Done
+- **드래그 앤 드롭**: 태스크 카드를 컬럼 간 또는 컬럼 내에서 드래그하여 상태 변경 및 순서 재정렬
+- **태스크 카드**: 제목, 설명, 우선순위(low/medium/high), 담당자 표시
+- **태스크 삭제**: 카드 호버 시 삭제 버튼 노출
+- **태스크 상세 보기**: 카드 더블클릭 시 상세 다이얼로그 열림 (모든 필드 편집 가능)
+
+### 2. 새 태스크 생성 마법사 (Task Wizard)
+
+3단계 위저드 형태의 태스크 생성 플로우:
+
+1. **기본 정보**: 태스크 이름(필수), 상태, 우선순위, 담당자(필수)
+2. **상세 설정**: 설명(필수), 마감일, 예상 시간, 태그 선택 (bug, feature, enhancement 등 8종)
+3. **확인/검토**: 입력 내용 최종 검토 후 생성
+
+각 단계에는 유효성 검사가 적용되며, 진행 바와 단계 인디케이터로 현재 위치를 표시한다.
+
+### 3. 팀 멤버 관리 (Members 탭)
+
+- **테이블 뷰**: 이름, 이메일, 역할(admin/developer/designer/qa), 상태(active/inactive), 가입일
+- **검색**: 이름 또는 이메일로 실시간 검색
+- **필터**: 역할별, 상태별 필터링
+- **페이지네이션**: 5/10건 단위, 페이지 번호 직접 이동
+- 22명의 시드 멤버 데이터 포함
+
+### 4. 문서 뷰어 (Docs 탭)
+
+- **4종 문서**: Project Overview, API Reference, Getting Started, Meeting Notes
+- **카드 선택기**: 카테고리별(Project/Technical/Guide/Notes) 색상 뱃지가 있는 문서 선택 카드
+- **iframe 뷰어**: 선택된 HTML 문서를 iframe으로 렌더링
+- **도구 모음**: 새로고침, 확장/축소, 새 탭에서 열기
+
+### 5. 상태 영속화
+
+- 모든 주요 상태(태스크 목록, 활성 탭, 검색어, 필터, 위저드 열림 상태 등)가 `localStorage`에 저장되어 새로고침 후에도 유지됨
+
+## agrune 어노테이션
+
+이 데모 앱의 핵심 목적은 agrune 프레임워크의 `data-agrune-*` 속성을 활용한 자동화 대상 검증이다.
+
+- **`data-agrune-action`**: 요소의 동작 타입 (`click`, `fill`)
+- **`data-agrune-name`**: 사람이 읽을 수 있는 요소 이름
+- **`data-agrune-desc`**: 요소에 대한 설명
+- **`data-agrune-key`**: 고유 식별 키
+- **`data-agrune-group`** / **`data-agrune-group-name`** / **`data-agrune-group-desc`**: 요소 그룹 정보
+
+Vite 설정에 포함된 `agruneAnnotationLint` 커스텀 플러그인이 빌드 시 `data-agrune-action`이 있는 요소에 `data-agrune-name`과 `data-agrune-desc`가 누락되었는지 검사한다.
+
+## 빌드 및 배포
+
+```bash
+# 프로덕션 빌드
+pnpm build
+
+# 빌드 결과물 로컬 프리뷰
+pnpm preview
+```
+
+빌드 결과물은 `dist/` 디렉터리에 생성된다. 정적 파일 서버(Nginx, Cloudflare Pages, Vercel 등)에 `dist/` 디렉터리를 배포하면 된다.
+
+## 검증 포인트
+
+- React UI 위에 `data-agrune-*` 어노테이션이 부착되어 있다.
+- agrune 확장 프로그램이 탭, 그룹, 타깃 정보를 자동 수집한다.
 - 드래그, 클릭, 입력, 대기 동작을 수동 검증하기 위한 fixture로 유지한다.
