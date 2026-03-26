@@ -13,8 +13,16 @@ export function StageNode({ data, id }: NodeProps<Node<WorkflowNodeData>>) {
     >
       <div className="text-sm font-semibold text-foreground">{data.label}</div>
       <div className="text-xs text-muted-foreground mt-1">{data.description}</div>
-      <Handle type="target" position={Position.Left} className="!bg-primary !w-2 !h-2" />
-      <Handle type="source" position={Position.Right} className="!bg-primary !w-2 !h-2" />
+      <Handle
+        type="target"
+        position={Position.Left}
+        className="!z-10 !h-4 !w-4 !border-2 !border-background !bg-primary !shadow-sm"
+      />
+      <Handle
+        type="source"
+        position={Position.Right}
+        className="!z-10 !h-4 !w-4 !border-2 !border-background !bg-primary !shadow-sm"
+      />
     </div>
   )
 }

@@ -13,8 +13,16 @@ export function TaskNode({ data, id }: NodeProps<Node<WorkflowNodeData>>) {
     >
       <div className="text-xs font-medium text-muted-foreground">{data.label}</div>
       <div className="text-[11px] text-muted-foreground/70 mt-0.5">{data.description}</div>
-      <Handle type="target" position={Position.Left} className="!bg-muted-foreground !w-1.5 !h-1.5" />
-      <Handle type="source" position={Position.Right} className="!bg-muted-foreground !w-1.5 !h-1.5" />
+      <Handle
+        type="target"
+        position={Position.Left}
+        className="!z-10 !h-3.5 !w-3.5 !border-2 !border-background !bg-muted-foreground !shadow-sm"
+      />
+      <Handle
+        type="source"
+        position={Position.Right}
+        className="!z-10 !h-3.5 !w-3.5 !border-2 !border-background !bg-muted-foreground !shadow-sm"
+      />
     </div>
   )
 }
