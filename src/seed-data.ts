@@ -312,50 +312,50 @@ export const SEED_WORKFLOW_NODES: Node<WorkflowNodeData>[] = [
   {
     id: 'planning',
     type: 'stage',
-    position: { x: 50, y: 200 },
+    position: { x: 0, y: 0 },
     data: { label: '기획', description: '요구사항 분석 및 기획' },
   },
   {
     id: 'design',
     type: 'stage',
-    position: { x: 250, y: 200 },
+    position: { x: 0, y: 0 },
     data: { label: '디자인', description: 'UI/UX 디자인' },
   },
   {
     id: 'dev',
     type: 'stage',
-    position: { x: 450, y: 200 },
+    position: { x: 0, y: 0 },
     data: { label: '개발', description: '기능 구현' },
   },
   {
     id: 'review',
     type: 'stage',
-    position: { x: 650, y: 200 },
+    position: { x: 0, y: 0 },
     data: { label: '코드 리뷰', description: 'PR 리뷰 및 피드백' },
   },
   {
     id: 'qa',
     type: 'stage',
-    position: { x: 850, y: 200 },
+    position: { x: 0, y: 0 },
     data: { label: 'QA 테스트', description: '품질 검증' },
   },
   {
     id: 'deploy',
     type: 'stage',
-    position: { x: 1050, y: 200 },
+    position: { x: 0, y: 0 },
     data: { label: '배포', description: '프로덕션 배포' },
   },
-  // Task nodes — 의도적으로 겹치게 배치
+  // Task nodes
   {
     id: 'labeling',
     type: 'task',
-    position: { x: 860, y: 190 },
+    position: { x: 0, y: 0 },
     data: { label: '라벨링', description: '데이터 라벨링 작업' },
   },
   {
     id: 'monitoring',
     type: 'task',
-    position: { x: 1060, y: 210 },
+    position: { x: 0, y: 0 },
     data: { label: '모니터링', description: '서비스 모니터링 설정' },
   },
 ]
