@@ -1,6 +1,6 @@
 # agrune-demo
 
-`agrune` 브라우저 자동화 프레임워크의 기능을 검증하기 위한 데모 웹 애플리케이션이다. 프로젝트 관리 도구(Project Manager)를 모방한 React SPA로, 칸반 보드 / 팀 멤버 관리 / 문서 뷰어 등 실제 서비스에서 볼 수 있는 다양한 UI 패턴을 포함하고 있다. 모든 인터랙티브 요소에는 `data-agrune-*` 어노테이션이 부착되어 있어, agrune 확장 프로그램과 MCP 서버가 탭/그룹/타깃 정보를 자동 수집할 수 있도록 설계되었다.
+`agrune` 브라우저 자동화 프레임워크의 기능을 검증하기 위한 데모 웹 애플리케이션이다. 프로젝트 관리 도구(Project Manager)를 모방한 React SPA로, 칸반 보드 / 팀 멤버 관리 / 문서 뷰어 등 실제 서비스에서 볼 수 있는 다양한 UI 패턴을 포함하고 있다. 자동화 대상은 `manifest.json`에 정의된 Agrune manifest로 제공된다.
 
 ## 기술 스택
 
@@ -30,17 +30,15 @@ pnpm install
 pnpm dev
 ```
 
-### agrune 확장 프로그램과 함께 사용하기
-
-agrune 모노레포 루트에서 확장 프로그램과 MCP 서버를 먼저 설치한다.
+### Agrune manifest 사용
 
 ```bash
-# 모노레포 루트에서
-pnpm install
-pnpm dlx tsx packages/mcp-server/bin/agrune-mcp.ts install
+# demo 앱 실행 후, agrune에서 manifest를 로드한다.
+pnpm dev
+agrune mcp manifest validate manifest.json
 ```
 
-이후 `chrome://extensions`에서 `~/.agrune/extension/` 디렉터리를 로드하고, 이 데모 앱을 열어 검증한다.
+`--url http://localhost:5173`을 붙이면 현재 DOM에 렌더링된 target까지 확인한다. 태스크 상세 다이얼로그, 새 태스크 위저드, select option처럼 상호작용 뒤에 생기는 target은 해당 UI를 연 상태에서 스냅샷/실행 흐름으로 검증한다.
 
 ## 스크립트
 
@@ -57,7 +55,7 @@ pnpm dlx tsx packages/mcp-server/bin/agrune-mcp.ts install
 ```
 agrune-demo/
 ├── index.html                     # 앱 엔트리 HTML
-├── vite.config.ts                 # Vite 설정 (React SWC, Tailwind, agrune 어노테이션 린트 플러그인)
+├── vite.config.ts                 # Vite 설정 (React SWC, Tailwind)
 ├── tsconfig.json                  # TypeScript 프로젝트 레퍼런스
 ├── tsconfig.app.json              # 앱 소스 TypeScript 설정
 ├── tsconfig.node.json             # Node (Vite 설정) TypeScript 설정
@@ -142,17 +140,9 @@ agrune-demo/
 
 - 모든 주요 상태(태스크 목록, 활성 탭, 검색어, 필터, 위저드 열림 상태 등)가 `localStorage`에 저장되어 새로고침 후에도 유지됨
 
-## agrune 어노테이션
+## Agrune manifest
 
-이 데모 앱의 핵심 목적은 agrune 프레임워크의 `data-agrune-*` 속성을 활용한 자동화 대상 검증이다.
-
-- **`data-agrune-action`**: 요소의 동작 타입 (`click`, `fill`)
-- **`data-agrune-name`**: 사람이 읽을 수 있는 요소 이름
-- **`data-agrune-desc`**: 요소에 대한 설명
-- **`data-agrune-key`**: 고유 식별 키
-- **`data-agrune-group`** / **`data-agrune-group-name`** / **`data-agrune-group-desc`**: 요소 그룹 정보
-
-Vite 설정에 포함된 `agruneAnnotationLint` 커스텀 플러그인이 빌드 시 `data-agrune-action`이 있는 요소에 `data-agrune-name`과 `data-agrune-desc`가 누락되었는지 검사한다.
+`manifest.json`은 보드의 티켓 카드, 태스크 상세 다이얼로그, 새 태스크 위저드, 담당자 선택 옵션을 target으로 노출한다. 로컬 에이전트는 이 manifest를 로드해 “가장 할 일 없는 사람에게 티켓 할당” 시나리오를 수행할 수 있다.
 
 ## 빌드 및 배포
 
@@ -168,6 +158,7 @@ pnpm preview
 
 ## 검증 포인트
 
-- React UI 위에 `data-agrune-*` 어노테이션이 부착되어 있다.
-- agrune 확장 프로그램이 탭, 그룹, 타깃 정보를 자동 수집한다.
+- `manifest.json`이 핵심 보드/담당자 target을 제공한다.
+- `agrune mcp manifest validate`로 target schema를 확인한다.
+- 태스크 상세 다이얼로그와 담당자 선택 옵션은 카드를 연 뒤 스냅샷/실행 흐름으로 확인한다.
 - 드래그, 클릭, 입력, 대기 동작을 수동 검증하기 위한 fixture로 유지한다.

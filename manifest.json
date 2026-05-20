@@ -1,0 +1,168 @@
+{
+  "version": 3,
+  "groups": [
+    {
+      "groupId": "board",
+      "name": "Kanban board",
+      "desc": "Targets for choosing a ticket and assigning it to the least busy active member.",
+      "targets": [
+        {
+          "targetId": "nav_board_tab",
+          "name": "Board tab",
+          "desc": "Open the kanban board.",
+          "selector": {
+            "role": {
+              "name": "tab",
+              "level": "Board"
+            }
+          },
+          "actionKinds": ["click"]
+        },
+        {
+          "targetId": "nav_members_tab",
+          "name": "Members tab",
+          "desc": "Open the team member table.",
+          "selector": {
+            "role": {
+              "name": "tab",
+              "level": "Members"
+            }
+          },
+          "actionKinds": ["click"]
+        },
+        {
+          "targetId": "board_new_task_button",
+          "name": "New task",
+          "desc": "Open the task creation wizard.",
+          "selector": {
+            "role": {
+              "name": "button",
+              "level": "New Task"
+            },
+            "text": "New Task"
+          },
+          "actionKinds": ["click"]
+        },
+        {
+          "targetId": "task_detail_assignee_select",
+          "name": "Task detail assignee",
+          "desc": "Open the assignee picker in the task details dialog.",
+          "selector": {
+            "css": "#task-detail-assignee"
+          },
+          "actionKinds": ["click"]
+        },
+        {
+          "targetId": "task_detail_save_button",
+          "name": "Save task changes",
+          "desc": "Save edits made in the task details dialog.",
+          "selector": {
+            "role": {
+              "name": "button",
+              "level": "Save Changes"
+            },
+            "text": "Save Changes"
+          },
+          "actionKinds": ["click"]
+        },
+        {
+          "targetId": "wizard_title_input",
+          "name": "Wizard task name",
+          "desc": "Fill the task name in the new task wizard.",
+          "selector": {
+            "css": "#task-name"
+          },
+          "actionKinds": ["fill"]
+        },
+        {
+          "targetId": "wizard_assignee_select",
+          "name": "Wizard assignee",
+          "desc": "Open the assignee picker in the new task wizard.",
+          "selector": {
+            "css": "#task-assignee"
+          },
+          "actionKinds": ["click"]
+        },
+        {
+          "targetId": "wizard_description_input",
+          "name": "Wizard description",
+          "desc": "Fill the task description in the new task wizard.",
+          "selector": {
+            "css": "#task-description"
+          },
+          "actionKinds": ["fill"]
+        },
+        {
+          "targetId": "wizard_next_button",
+          "name": "Wizard next",
+          "desc": "Move to the next step in the new task wizard.",
+          "selector": {
+            "role": {
+              "name": "button",
+              "level": "Next"
+            },
+            "text": "Next"
+          },
+          "actionKinds": ["click"]
+        },
+        {
+          "targetId": "wizard_create_task_button",
+          "name": "Wizard create task",
+          "desc": "Create the task from the wizard confirmation step.",
+          "selector": {
+            "role": {
+              "name": "button",
+              "level": "Create Task"
+            },
+            "text": "Create Task"
+          },
+          "actionKinds": ["click"]
+        }
+      ],
+      "repeats": [
+        {
+          "repeatId": "task_cards",
+          "template": "task_${key}",
+          "keyFrom": "el.dataset.taskId ?? \"\"",
+          "nameFrom": "el.dataset.taskTitle ?? \"\"",
+          "strategy": "dom",
+          "containerSelector": {
+            "css": "div[role=\"tabpanel\"][data-state=\"active\"]"
+          },
+          "targets": [
+            {
+              "targetId": "task_card_open",
+              "name": "Open task card",
+              "desc": "Open a task card details dialog.",
+              "selector": {
+                "css": "[data-agrune-demo=\"task-card\"]"
+              },
+              "actionKinds": ["dblclick"]
+            }
+          ]
+        },
+        {
+          "repeatId": "assignee_options",
+          "template": "assignee_${key}",
+          "keyFrom": "(el.textContent ?? \"\").replace(/\\s*\\(.+\\)\\s*$/, \"\").trim().toLowerCase().replace(/[^a-z0-9]+/g, \"-\").replace(/^-|-$/g, \"\")",
+          "nameFrom": "(el.textContent ?? \"\").trim()",
+          "strategy": "dom",
+          "targets": [
+            {
+              "targetId": "assignee_option",
+              "name": "Assignee option",
+              "desc": "Choose a visible assignee option from an open Radix Select list.",
+              "selector": {
+                "role": {
+                  "name": "option"
+                },
+                "css": "[role=\"option\"]"
+              },
+              "actionKinds": ["click"]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

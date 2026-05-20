@@ -190,7 +190,12 @@ export function KanbanBoard({ tasks, members, onTasksChange, onNewTask }: Kanban
                   {columnTasks.map((task) => (
                     <Card
                       key={task.id}
+                      data-agrune-demo="task-card"
+                      data-task-id={task.id}
+                      data-task-title={task.title}
                       draggable
+                      role="button"
+                      aria-label={`Open task ${task.title}`}
                       onDragStart={(e) => handleDragStart(e, task)}
                       onDragEnd={handleDragEnd}
                       onDragOver={(e) => handleTaskDragOver(e, task.id)}
@@ -215,6 +220,7 @@ export function KanbanBoard({ tasks, members, onTasksChange, onNewTask }: Kanban
                           <Button
                             variant="ghost"
                             size="icon"
+                            aria-label={`Delete task ${task.title}`}
                             className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity shrink-0"
                             onClick={(e) => {
                               e.stopPropagation()
