@@ -1,6 +1,6 @@
 # agrune-demo
 
-`agrune` 브라우저 자동화 프레임워크의 기능을 검증하기 위한 데모 웹 애플리케이션이다. 프로젝트 관리 도구(Project Manager)를 모방한 React SPA로, 칸반 보드 / 팀 멤버 관리 / 문서 뷰어 등 실제 서비스에서 볼 수 있는 다양한 UI 패턴을 포함하고 있다. 자동화 대상은 `manifest.json`에 정의된 Agrune manifest로 제공된다.
+`agrune` 브라우저 자동화 프레임워크의 기능을 검증하기 위한 데모 웹 애플리케이션이다. 프로젝트 관리 도구(Project Manager)를 모방한 React SPA로, 칸반 보드 / 팀 멤버 관리 / 문서 뷰어 / 워크플로우 편집기 등 실제 서비스에서 볼 수 있는 다양한 UI 패턴을 포함하고 있다. 자동화 대상은 앱이 `manifest.json`을 import해 `window.__agrune_manifest__`로 노출하는 page-owned manifest 방식으로 제공된다.
 
 ## 기술 스택
 
@@ -11,6 +11,7 @@
 | 언어 | TypeScript | 5.9 |
 | 스타일링 | Tailwind CSS | 4 (Vite 플러그인) |
 | UI 컴포넌트 | Radix UI (Dialog, Select, Tabs, Label, Separator, Progress) | - |
+| 그래프 UI | @xyflow/react | - |
 | 유틸리티 | class-variance-authority, clsx, tailwind-merge, lucide-react | - |
 | 린터 | ESLint 9 (flat config) + typescript-eslint + react-hooks + react-refresh | - |
 | 패키지 매니저 | pnpm | - |
@@ -33,12 +34,13 @@ pnpm dev
 ### Agrune manifest 사용
 
 ```bash
-# demo 앱 실행 후, agrune에서 manifest를 로드한다.
+# demo 앱 실행 후 Agrune/Quick Mode에서 http://localhost:5173 페이지를 연다.
 pnpm dev
-agrune mcp manifest validate manifest.json
 ```
 
-`--url http://localhost:5173`을 붙이면 현재 DOM에 렌더링된 target까지 확인한다. 태스크 상세 다이얼로그, 새 태스크 위저드, select option처럼 상호작용 뒤에 생기는 target은 해당 UI를 연 상태에서 스냅샷/실행 흐름으로 검증한다.
+앱 시작 시 `src/main.tsx`가 `manifest.json`을 `window.__agrune_manifest__`에 등록하고 Quick Mode 런타임에 reload를 요청한다. 별도 `mcp` subcommand나 manifest-load CLI를 사용하지 않는다. target 확인과 시나리오 실행은 `browser_open_tab`, `browser_get_targets`, `browser_click`, `browser_fill`, `browser_wait_for` 같은 Agrune `browser_*` MCP tools로 현재 페이지 DOM을 관찰하며 수행한다.
+
+태스크 상세 다이얼로그, 새 태스크 위저드, select option처럼 상호작용 뒤에 생기는 target은 해당 UI를 연 상태에서 snapshot/실행 흐름으로 확인한다.
 
 ## 스크립트
 
@@ -55,6 +57,7 @@ agrune mcp manifest validate manifest.json
 ```
 agrune-demo/
 ├── index.html                     # 앱 엔트리 HTML
+├── manifest.json                   # page-owned Agrune manifest
 ├── vite.config.ts                 # Vite 설정 (React SWC, Tailwind)
 ├── tsconfig.json                  # TypeScript 프로젝트 레퍼런스
 ├── tsconfig.app.json              # 앱 소스 TypeScript 설정
@@ -82,7 +85,9 @@ agrune-demo/
     └── components/
         ├── ui/                    # shadcn/ui 기반 공통 UI 컴포넌트
         │   ├── badge.tsx
+        │   ├── badge-variants.ts
         │   ├── button.tsx
+        │   ├── button-variants.ts
         │   ├── card.tsx
         │   ├── dialog.tsx
         │   ├── input.tsx
@@ -98,7 +103,11 @@ agrune-demo/
             ├── TaskWizard.tsx     # 새 태스크 생성 마법사 (3단계)
             ├── TaskDetailDialog.tsx # 태스크 상세 보기/편집 다이얼로그
             ├── MemberTable.tsx    # 팀 멤버 테이블 (검색, 필터, 페이지네이션)
-            └── DocumentViewer.tsx # 문서 뷰어 (iframe 기반)
+            ├── DocumentViewer.tsx # 문서 뷰어 (iframe 기반)
+            ├── WorkflowEditor.tsx # React Flow 기반 워크플로우 편집기
+            └── workflow/
+                ├── StageNode.tsx  # 워크플로우 stage node
+                └── TaskNode.tsx   # 워크플로우 task node
 ```
 
 ## 주요 기능
@@ -136,13 +145,20 @@ agrune-demo/
 - **iframe 뷰어**: 선택된 HTML 문서를 iframe으로 렌더링
 - **도구 모음**: 새로고침, 확장/축소, 새 탭에서 열기
 
-### 5. 상태 영속화
+### 5. 워크플로우 편집기 (Workflow 탭)
+
+- **React Flow 캔버스**: stage node와 task node를 시각적으로 배치
+- **연결 편집**: handle drag로 node 간 edge 생성, 같은 카드 쌍의 중복 연결 방지
+- **연결 삭제**: edge 클릭 시 연결 삭제
+- **탐색 도구**: Background, Controls, MiniMap 제공
+
+### 6. 상태 영속화
 
 - 모든 주요 상태(태스크 목록, 활성 탭, 검색어, 필터, 위저드 열림 상태 등)가 `localStorage`에 저장되어 새로고침 후에도 유지됨
 
-## Agrune manifest
+## Agrune page-owned manifest
 
-`manifest.json`은 보드의 티켓 카드, 태스크 상세 다이얼로그, 새 태스크 위저드, 담당자 선택 옵션을 target으로 노출한다. 로컬 에이전트는 이 manifest를 로드해 “가장 할 일 없는 사람에게 티켓 할당” 시나리오를 수행할 수 있다.
+`manifest.json`은 보드의 티켓 카드, 태스크 상세 다이얼로그, 새 태스크 위저드, 담당자 선택 옵션을 target으로 노출한다. 앱은 manifest를 페이지 전역의 `window.__agrune_manifest__`에 등록하고, 로컬 에이전트는 현재 브라우저 페이지에서 `browser_*` tools를 통해 “가장 할 일 없는 사람에게 티켓 할당” 같은 시나리오를 수행할 수 있다.
 
 ## 빌드 및 배포
 
@@ -159,6 +175,7 @@ pnpm preview
 ## 검증 포인트
 
 - `manifest.json`이 핵심 보드/담당자 target을 제공한다.
-- `agrune mcp manifest validate`로 target schema를 확인한다.
-- 태스크 상세 다이얼로그와 담당자 선택 옵션은 카드를 연 뒤 스냅샷/실행 흐름으로 확인한다.
-- 드래그, 클릭, 입력, 대기 동작을 수동 검증하기 위한 fixture로 유지한다.
+- 앱 실행 후 `window.__agrune_manifest__`가 page-owned manifest로 등록되는지 확인한다.
+- `browser_get_targets`로 현재 DOM의 target 후보를 확인하고, `browser_click`/`browser_fill`/`browser_wait_for`로 클릭, 입력, 대기 흐름을 검증한다.
+- 태스크 상세 다이얼로그와 담당자 선택 옵션은 카드를 연 뒤 snapshot/실행 흐름으로 확인한다.
+- 보드 드래그, 문서 iframe, Workflow canvas 상호작용을 수동 검증하기 위한 fixture로 유지한다.

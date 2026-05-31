@@ -53,19 +53,19 @@ function App() {
       <main className="max-w-[1400px] mx-auto px-6 py-6">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
           <TabsList className="grid w-full max-w-md grid-cols-4">
-            <TabsTrigger value="board" className="gap-1.5">
+            <TabsTrigger value="board" className="gap-1.5" data-testid="nav-board-tab">
               <KanbanSquare className="h-4 w-4" />
               Board
             </TabsTrigger>
-            <TabsTrigger value="members" className="gap-1.5">
+            <TabsTrigger value="members" className="gap-1.5" data-testid="nav-members-tab">
               <Users className="h-4 w-4" />
               Members
             </TabsTrigger>
-            <TabsTrigger value="docs" className="gap-1.5">
+            <TabsTrigger value="docs" className="gap-1.5" data-testid="nav-docs-tab">
               <FileText className="h-4 w-4" />
               Docs
             </TabsTrigger>
-            <TabsTrigger value="workflow" className="gap-1.5">
+            <TabsTrigger value="workflow" className="gap-1.5" data-testid="nav-workflow-tab">
               <Workflow className="h-4 w-4" />
               Workflow
             </TabsTrigger>

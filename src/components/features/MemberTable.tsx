@@ -104,6 +104,7 @@ export function MemberTable({ members }: MemberTableProps) {
         <div className="relative flex-1 min-w-[200px] max-w-sm">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
+            data-testid="member-search-input"
             placeholder="Search by name or email..."
             value={search}
             onChange={(e) => handleSearchChange(e.target.value)}
@@ -112,7 +113,7 @@ export function MemberTable({ members }: MemberTableProps) {
         </div>
 
         <Select value={roleFilter} onValueChange={handleRoleFilterChange}>
-          <SelectTrigger className="w-[140px]">
+          <SelectTrigger className="w-[140px]" data-testid="member-role-filter">
             <SelectValue placeholder="Role" />
           </SelectTrigger>
           <SelectContent>
@@ -125,7 +126,7 @@ export function MemberTable({ members }: MemberTableProps) {
         </Select>
 
         <Select value={statusFilter} onValueChange={handleStatusFilterChange}>
-          <SelectTrigger className="w-[140px]">
+          <SelectTrigger className="w-[140px]" data-testid="member-status-filter">
             <SelectValue placeholder="Status" />
           </SelectTrigger>
           <SelectContent>
@@ -161,7 +162,12 @@ export function MemberTable({ members }: MemberTableProps) {
               </TableRow>
             ) : (
               paginatedMembers.map((member) => (
-                <TableRow key={member.id}>
+                <TableRow
+                  key={member.id}
+                  data-agrune-demo="member-row"
+                  data-member-id={member.id}
+                  data-member-name={member.name}
+                >
                   <TableCell className="font-medium">{member.name}</TableCell>
                   <TableCell className="text-muted-foreground">{member.email}</TableCell>
                   <TableCell>
@@ -205,7 +211,7 @@ export function MemberTable({ members }: MemberTableProps) {
           <div className="flex items-center gap-1.5">
             <span className="text-sm text-muted-foreground">Rows:</span>
             <Select value={String(pageSize)} onValueChange={handlePageSizeChange}>
-              <SelectTrigger className="w-[70px] h-8">
+              <SelectTrigger className="w-[70px] h-8" data-testid="member-page-size">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -218,10 +224,11 @@ export function MemberTable({ members }: MemberTableProps) {
             </Select>
           </div>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2" data-testid="member-pagination">
           <Button
             variant="outline"
             size="sm"
+            data-testid="member-pagination-previous"
             onClick={() => setPage(Math.max(0, currentPage - 1))}
             disabled={currentPage === 0}
           >
@@ -232,6 +239,8 @@ export function MemberTable({ members }: MemberTableProps) {
             {Array.from({ length: totalPages }, (_, i) => (
               <Button
                 key={i}
+                data-agrune-demo="member-page-button"
+                data-page={i + 1}
                 variant={i === currentPage ? 'default' : 'outline'}
                 size="sm"
                 className="w-8 h-8 p-0"
@@ -244,6 +253,7 @@ export function MemberTable({ members }: MemberTableProps) {
           <Button
             variant="outline"
             size="sm"
+            data-testid="member-pagination-next"
             onClick={() => setPage(Math.min(totalPages - 1, currentPage + 1))}
             disabled={currentPage >= totalPages - 1}
           >

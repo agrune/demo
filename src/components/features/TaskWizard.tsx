@@ -143,7 +143,7 @@ export function TaskWizard({ open, onOpenChange, members, onSubmit }: TaskWizard
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="sm:max-w-[540px]">
+      <DialogContent className="sm:max-w-[540px]" closeButtonTestId="wizard-close-button">
         <DialogHeader>
           <DialogTitle>Create New Task</DialogTitle>
           <DialogDescription>
@@ -360,6 +360,8 @@ export function TaskWizard({ open, onOpenChange, members, onSubmit }: TaskWizard
                       <button
                         key={tag}
                         type="button"
+                        data-agrune-demo="wizard-tag"
+                        data-tag={tag}
                         onClick={() => toggleTag(tag)}
                         className={cn(
                           'inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium border transition-all cursor-pointer',
@@ -497,14 +499,14 @@ export function TaskWizard({ open, onOpenChange, members, onSubmit }: TaskWizard
 
         <DialogFooter className="gap-2">
           {step > 0 && (
-            <Button variant="outline" onClick={handleBack}>
+            <Button variant="outline" onClick={handleBack} data-testid="wizard-back-button">
               Back
             </Button>
           )}
           {step < 2 ? (
-            <Button onClick={handleNext}>Next</Button>
+            <Button onClick={handleNext} data-testid="wizard-next-button">Next</Button>
           ) : (
-            <Button onClick={handleSubmit}>Create Task</Button>
+            <Button onClick={handleSubmit} data-testid="wizard-create-task-button">Create Task</Button>
           )}
         </DialogFooter>
       </DialogContent>

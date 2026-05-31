@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useRef, useState } from 'react'
 import {
   Dialog,
   DialogContent,
@@ -33,6 +33,13 @@ import { cn } from '@/lib/utils'
 interface TaskDetailDialogProps {
   task: Task | null
   open: boolean
+  members: Member[]
+  onOpenChange: (open: boolean) => void
+  onSave: (task: Task) => void
+}
+
+interface TaskDetailDialogContentProps {
+  task: Task
   members: Member[]
   onOpenChange: (open: boolean) => void
   onSave: (task: Task) => void
@@ -96,16 +103,30 @@ export function TaskDetailDialog({
   onOpenChange,
   onSave,
 }: TaskDetailDialogProps) {
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      {task && (
+        <TaskDetailDialogContent
+          key={task.id}
+          task={task}
+          members={members}
+          onOpenChange={onOpenChange}
+          onSave={onSave}
+        />
+      )}
+    </Dialog>
+  )
+}
+
+function TaskDetailDialogContent({
+  task,
+  members,
+  onOpenChange,
+  onSave,
+}: TaskDetailDialogContentProps) {
   const [data, setData] = useState<TaskFormData>(() => createFormData(task))
   const [errors, setErrors] = useState<TaskFormErrors>({})
   const contentRef = useRef<HTMLDivElement | null>(null)
-
-  useEffect(() => {
-    if (open) {
-      setData(createFormData(task))
-      setErrors({})
-    }
-  }, [open, task])
 
   const selectableMembers = members.filter(
     (member) => member.status === 'active' || member.name === data.assignee
@@ -139,7 +160,7 @@ export function TaskDetailDialog({
   }
 
   const handleSave = () => {
-    if (!task || !validate()) return
+    if (!validate()) return
 
     const nextTask: Task = {
       ...task,
@@ -167,15 +188,15 @@ export function TaskDetailDialog({
   }
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent
-        ref={contentRef}
-        className="sm:max-w-[720px]"
-        onOpenAutoFocus={(event) => {
-          event.preventDefault()
-          contentRef.current?.focus()
-        }}
-      >
+    <DialogContent
+      ref={contentRef}
+      className="sm:max-w-[720px]"
+      closeButtonTestId="task-detail-close-button"
+      onOpenAutoFocus={(event) => {
+        event.preventDefault()
+        contentRef.current?.focus()
+      }}
+    >
         <DialogHeader>
           <DialogTitle>Task Details</DialogTitle>
           <DialogDescription>
@@ -395,6 +416,8 @@ export function TaskDetailDialog({
                       <button
                         key={tag}
                         type="button"
+                        data-agrune-demo="task-detail-tag"
+                        data-tag={tag}
                         onClick={() => toggleTag(tag)}
                         className={cn(
                           'inline-flex cursor-pointer items-center gap-1 rounded-full border px-2.5 py-0.5 text-xs font-medium transition-all',
@@ -443,12 +466,17 @@ export function TaskDetailDialog({
         )}
 
         <DialogFooter className="gap-2">
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
+          <Button
+            variant="outline"
+            onClick={() => onOpenChange(false)}
+            data-testid="task-detail-cancel-button"
+          >
             Cancel
           </Button>
-          <Button onClick={handleSave}>Save Changes</Button>
+          <Button onClick={handleSave} data-testid="task-detail-save-button">
+            Save Changes
+          </Button>
         </DialogFooter>
-      </DialogContent>
-    </Dialog>
+    </DialogContent>
   )
 }

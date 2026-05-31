@@ -166,6 +166,11 @@ export function KanbanBoard({ tasks, members, onTasksChange, onNewTask }: Kanban
             return (
               <div
                 key={column.id}
+                data-agrune-demo="kanban-column"
+                data-status={column.id}
+                data-column-label={column.label}
+                role="region"
+                aria-label={`${column.label} column`}
                 className={cn(
                   'rounded-lg border-2 border-dashed p-3 min-h-[280px] md:min-h-[500px] transition-colors',
                   isOver ? 'border-primary bg-primary/5' : 'border-transparent bg-muted/30'

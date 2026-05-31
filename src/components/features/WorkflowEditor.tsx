@@ -205,8 +205,9 @@ export function WorkflowEditor({ initialNodes, initialEdges }: WorkflowEditorPro
         </CardDescription>
       </CardHeader>
       <CardContent className="p-0">
-        <div className="h-[600px] w-full">
+        <div className="h-[600px] w-full" data-agrune-demo="workflow-canvas">
           <ReactFlow
+            className="agrune-workflow-flow"
             nodes={nodes}
             edges={edges}
             onNodesChange={onNodesChange}

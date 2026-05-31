@@ -166,6 +166,7 @@ export function DocumentViewer() {
                 size="sm"
                 onClick={handleRefresh}
                 title="Refresh document"
+                data-testid="doc-refresh-button"
                 className="h-8 w-8 p-0"
               >
                 <RefreshCw className="h-3.5 w-3.5" />
@@ -175,6 +176,7 @@ export function DocumentViewer() {
                 size="sm"
                 onClick={() => setExpanded(!expanded)}
                 title={expanded ? 'Collapse' : 'Expand'}
+                data-testid="doc-expand-toggle"
                 className="h-8 w-8 p-0"
               >
                 {expanded ? <Minimize2 className="h-3.5 w-3.5" /> : <Maximize2 className="h-3.5 w-3.5" />}
@@ -183,6 +185,7 @@ export function DocumentViewer() {
                 variant="outline"
                 size="sm"
                 onClick={() => window.open(selectedDoc.path, '_blank')}
+                data-testid="doc-open-new-tab"
                 className="h-8 gap-1.5"
               >
                 <ExternalLink className="h-3.5 w-3.5" />
