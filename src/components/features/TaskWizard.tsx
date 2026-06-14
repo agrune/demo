@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import {
   Dialog,
   DialogContent,
@@ -30,6 +30,8 @@ interface TaskWizardProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   members: Member[]
+  /** when opened from a member action, pre-fill the assignee */
+  prefillAssignee?: string
   onSubmit: (task: Omit<Task, 'id' | 'order' | 'createdAt'>) => void
 }
 
@@ -60,10 +62,19 @@ const INITIAL_DATA: WizardData = {
   estimatedHours: '',
 }
 
-export function TaskWizard({ open, onOpenChange, members, onSubmit }: TaskWizardProps) {
+export function TaskWizard({ open, onOpenChange, members, prefillAssignee, onSubmit }: TaskWizardProps) {
   const [step, setStep] = useState<StepIndex>(0)
   const [errors, setErrors] = useState<WizardErrors>({})
   const [data, setData] = useState<WizardData>({ ...INITIAL_DATA })
+
+  // On open, start fresh — optionally with a pre-filled assignee (from a member action).
+  useEffect(() => {
+    if (open) {
+      setStep(0)
+      setErrors({})
+      setData({ ...INITIAL_DATA, assignee: prefillAssignee ?? '' })
+    }
+  }, [open, prefillAssignee])
 
   const resetWizard = () => {
     setStep(0)

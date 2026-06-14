@@ -17,7 +17,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { ChevronLeft, ChevronRight, Search, Users } from 'lucide-react'
+import { ChevronLeft, ChevronRight, MessageSquare, Plus, Search, Users } from 'lucide-react'
 import type { Member } from '@/types'
 import { ROLE_COLORS } from '@/types'
 import { cn } from '@/lib/utils'
@@ -25,11 +25,13 @@ import { useLocalStorage } from '@/hooks/useLocalStorage'
 
 interface MemberTableProps {
   members: Member[]
+  onCreateTicket: (member: Member) => void
+  onMessageMember: (member: Member) => void
 }
 
 const PAGE_SIZE_OPTIONS = [5, 10] as const
 
-export function MemberTable({ members }: MemberTableProps) {
+export function MemberTable({ members, onCreateTicket, onMessageMember }: MemberTableProps) {
   const [search, setSearch] = useLocalStorage<string>('pm-member-search', '')
   const [roleFilter, setRoleFilter] = useLocalStorage<string>('pm-member-role-filter', 'all')
   const [statusFilter, setStatusFilter] = useLocalStorage<string>('pm-member-status-filter', 'all')
@@ -44,7 +46,9 @@ export function MemberTable({ members }: MemberTableProps) {
       result = result.filter(
         (m) =>
           m.name.toLowerCase().includes(q) ||
-          m.email.toLowerCase().includes(q)
+          m.email.toLowerCase().includes(q) ||
+          (m.skills ?? []).some((s) => s.toLowerCase().includes(q)) ||
+          (m.department ?? '').toLowerCase().includes(q)
       )
     }
 
@@ -146,17 +150,18 @@ export function MemberTable({ members }: MemberTableProps) {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead className="w-[200px]">Name</TableHead>
+              <TableHead className="w-[180px]">Name</TableHead>
               <TableHead>Email</TableHead>
-              <TableHead className="w-[120px]">Role</TableHead>
-              <TableHead className="w-[100px]">Status</TableHead>
-              <TableHead className="w-[120px]">Joined</TableHead>
+              <TableHead className="w-[110px]">Role</TableHead>
+              <TableHead>Skills</TableHead>
+              <TableHead className="w-[90px]">Status</TableHead>
+              <TableHead className="w-[150px]">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {paginatedMembers.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={5} className="h-24 text-center text-muted-foreground">
+                <TableCell colSpan={6} className="h-24 text-center text-muted-foreground">
                   No members found matching your filters.
                 </TableCell>
               </TableRow>
@@ -167,6 +172,8 @@ export function MemberTable({ members }: MemberTableProps) {
                   data-agrune-demo="member-row"
                   data-member-id={member.id}
                   data-member-name={member.name}
+                  data-member-role={member.role}
+                  data-member-status={member.status}
                 >
                   <TableCell className="font-medium">{member.name}</TableCell>
                   <TableCell className="text-muted-foreground">{member.email}</TableCell>
@@ -178,6 +185,12 @@ export function MemberTable({ members }: MemberTableProps) {
                       {member.role}
                     </Badge>
                   </TableCell>
+                  <TableCell className="text-muted-foreground text-xs">
+                    {(member.skills ?? []).join(', ') || '—'}
+                    {member.department && (
+                      <span className="block text-[10px] text-muted-foreground/70">{member.department}</span>
+                    )}
+                  </TableCell>
                   <TableCell>
                     <Badge
                       variant={member.status === 'active' ? 'default' : 'secondary'}
@@ -186,12 +199,32 @@ export function MemberTable({ members }: MemberTableProps) {
                       {member.status}
                     </Badge>
                   </TableCell>
-                  <TableCell className="text-muted-foreground text-sm">
-                    {new Date(member.joinedAt).toLocaleDateString('en-US', {
-                      month: 'short',
-                      day: 'numeric',
-                      year: 'numeric',
-                    })}
+                  <TableCell>
+                    <div className="flex items-center gap-1.5">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="h-7 px-2 text-xs"
+                        data-agrune-demo="member-create-ticket"
+                        data-member-id={member.id}
+                        aria-label={`Create ticket for ${member.name}`}
+                        onClick={() => onCreateTicket(member)}
+                      >
+                        <Plus className="h-3 w-3" />
+                        Ticket
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7"
+                        data-agrune-demo="member-message"
+                        data-member-id={member.id}
+                        aria-label={`Message ${member.name}`}
+                        onClick={() => onMessageMember(member)}
+                      >
+                        <MessageSquare className="h-3.5 w-3.5" />
+                      </Button>
+                    </div>
                   </TableCell>
                 </TableRow>
               ))

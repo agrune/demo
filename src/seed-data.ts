@@ -1,4 +1,4 @@
-import type { Task, Member, WorkflowNodeData } from './types'
+import type { Task, Member, ChatMessage, WorkflowNodeData } from './types'
 import type { Node, Edge } from '@xyflow/react'
 
 export const SEED_TASKS: Task[] = [
@@ -106,7 +106,7 @@ export function getAvatarInitials(name: string): string {
     .slice(0, 2)
 }
 
-export const SEED_MEMBERS: Member[] = [
+const RAW_MEMBERS: Member[] = [
   {
     id: 'member-1',
     name: 'Alice Chen',
@@ -306,6 +306,49 @@ export const SEED_MEMBERS: Member[] = [
     avatar: 'VS',
   },
 ]
+
+/** Per-member skills + department, merged into SEED_MEMBERS below. Lets workflows
+ *  target "a developer skilled in X" / "someone in the Security dept". */
+const MEMBER_EXTRAS: Record<string, { skills: string[]; department: string }> = {
+  'member-1': { skills: ['UI Design', 'Figma'], department: 'Design' },
+  'member-2': { skills: ['React', 'TypeScript', 'Node.js'], department: 'Frontend' },
+  'member-3': { skills: ['CI/CD', 'Docker', 'Kubernetes'], department: 'Platform' },
+  'member-4': { skills: ['Test Automation', 'Cypress'], department: 'QA' },
+  'member-5': { skills: ['Project Management'], department: 'Operations' },
+  'member-6': { skills: ['Java', 'Spring'], department: 'Backend' },
+  'member-7': { skills: ['UX Research', 'Prototyping'], department: 'Design' },
+  'member-8': { skills: ['Manual QA'], department: 'QA' },
+  'member-9': { skills: ['Python', 'Machine Learning', 'Data'], department: 'Data' },
+  'member-10': { skills: ['Go', 'Backend', 'gRPC'], department: 'Backend' },
+  'member-11': { skills: ['Performance Testing', 'k6'], department: 'QA' },
+  'member-12': { skills: ['Branding', 'Illustration'], department: 'Design' },
+  'member-13': { skills: ['People Ops'], department: 'Operations' },
+  'member-14': { skills: ['React', 'Next.js', 'GraphQL'], department: 'Frontend' },
+  'member-15': { skills: ['Regression'], department: 'QA' },
+  'member-16': { skills: ['Security', 'Auth', 'OAuth'], department: 'Security' },
+  'member-17': { skills: ['Design Systems', 'Figma'], department: 'Design' },
+  'member-18': { skills: ['PHP', 'Laravel'], department: 'Legacy' },
+  'member-19': { skills: ['API Testing', 'Postman'], department: 'QA' },
+  'member-20': { skills: ['Finance'], department: 'Operations' },
+  'member-21': { skills: ['Rust', 'Performance', 'WASM'], department: 'Backend' },
+  'member-22': { skills: ['Motion', '3D'], department: 'Design' },
+}
+
+export const SEED_MEMBERS: Member[] = RAW_MEMBERS.map((member) => ({
+  ...member,
+  ...(MEMBER_EXTRAS[member.id] ?? {}),
+}))
+
+/** Seed direct-message conversations, keyed by memberId. */
+export const SEED_MESSAGES: Record<string, ChatMessage[]> = {
+  'member-2': [
+    { id: 'msg-seed-1', memberId: 'member-2', from: 'them', body: '인증 플로우 작업 진행 중입니다. 리뷰 필요하면 말씀해 주세요.', timestamp: 1773532800000 },
+    { id: 'msg-seed-2', memberId: 'member-2', from: 'me', body: '확인했어요, 고생 많으십니다!', timestamp: 1773533400000 },
+  ],
+  'member-3': [
+    { id: 'msg-seed-3', memberId: 'member-3', from: 'them', body: 'CI/CD 파이프라인 스테이징 배포까지 설정해 뒀어요.', timestamp: 1773619200000 },
+  ],
+}
 
 export const SEED_WORKFLOW_NODES: Node<WorkflowNodeData>[] = [
   // Stage nodes — 메인 워크플로우

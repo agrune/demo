@@ -19,8 +19,8 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
-import { AlertCircle, Calendar, Clock, Tag, UserRound } from 'lucide-react'
-import type { Member, Task, TaskPriority, TaskStatus } from '@/types'
+import { AlertCircle, Calendar, Clock, Link2, MessageSquare, Tag, UserRound } from 'lucide-react'
+import type { Member, Task, TaskComment, TaskPriority, TaskStatus } from '@/types'
 import {
   AVAILABLE_TAGS,
   COLUMNS,
@@ -34,15 +34,21 @@ interface TaskDetailDialogProps {
   task: Task | null
   open: boolean
   members: Member[]
+  allTasks: Task[]
   onOpenChange: (open: boolean) => void
   onSave: (task: Task) => void
+  onAddComment: (taskId: string, comment: TaskComment) => void
+  onLinkTask: (taskId: string, relatedId: string) => void
 }
 
 interface TaskDetailDialogContentProps {
   task: Task
   members: Member[]
+  allTasks: Task[]
   onOpenChange: (open: boolean) => void
   onSave: (task: Task) => void
+  onAddComment: (taskId: string, comment: TaskComment) => void
+  onLinkTask: (taskId: string, relatedId: string) => void
 }
 
 interface TaskFormData {
@@ -100,8 +106,11 @@ export function TaskDetailDialog({
   task,
   open,
   members,
+  allTasks,
   onOpenChange,
   onSave,
+  onAddComment,
+  onLinkTask,
 }: TaskDetailDialogProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -110,8 +119,11 @@ export function TaskDetailDialog({
           key={task.id}
           task={task}
           members={members}
+          allTasks={allTasks}
           onOpenChange={onOpenChange}
           onSave={onSave}
+          onAddComment={onAddComment}
+          onLinkTask={onLinkTask}
         />
       )}
     </Dialog>
@@ -121,12 +133,41 @@ export function TaskDetailDialog({
 function TaskDetailDialogContent({
   task,
   members,
+  allTasks,
   onOpenChange,
   onSave,
+  onAddComment,
+  onLinkTask,
 }: TaskDetailDialogContentProps) {
   const [data, setData] = useState<TaskFormData>(() => createFormData(task))
   const [errors, setErrors] = useState<TaskFormErrors>({})
+  const [commentDraft, setCommentDraft] = useState('')
+  const [commentRecipient, setCommentRecipient] = useState('')
+  const [relatedDraft, setRelatedDraft] = useState('')
   const contentRef = useRef<HTMLDivElement | null>(null)
+
+  const comments = task.comments ?? []
+  const relatedTasks = allTasks.filter((t) => (task.relatedTo ?? []).includes(t.id))
+  const linkableTasks = allTasks.filter(
+    (t) => t.id !== task.id && !(task.relatedTo ?? []).includes(t.id),
+  )
+
+  const postComment = () => {
+    const body = commentDraft.trim()
+    if (!body) return
+    onAddComment(task.id, {
+      id: `comment-${Date.now()}`,
+      body,
+      recipient: commentRecipient || undefined,
+      createdAt: new Date().toISOString(),
+    })
+    setCommentDraft('')
+  }
+
+  const linkRelated = (relatedId: string) => {
+    setRelatedDraft('')
+    if (relatedId) onLinkTask(task.id, relatedId)
+  }
 
   const selectableMembers = members.filter(
     (member) => member.status === 'active' || member.name === data.assignee
@@ -400,6 +441,113 @@ function TaskDetailDialogContent({
                   {errors.description}
                 </p>
               )}
+            </div>
+
+            {/* Comments / opinion thread */}
+            <div className="space-y-3">
+              <Label className="flex items-center gap-1.5">
+                <MessageSquare className="h-3.5 w-3.5" />
+                Comments / Opinions
+              </Label>
+
+              {comments.length > 0 && (
+                <div className="space-y-2">
+                  {comments.map((comment) => (
+                    <div
+                      key={comment.id}
+                      data-agrune-demo="task-detail-comment"
+                      data-comment-id={comment.id}
+                      className="rounded-md border bg-muted/20 p-2.5 text-sm"
+                    >
+                      {comment.recipient && (
+                        <p className="text-xs font-medium text-primary mb-0.5">@{comment.recipient}</p>
+                      )}
+                      <p className="text-foreground whitespace-pre-wrap">{comment.body}</p>
+                      <p className="mt-1 text-[10px] text-muted-foreground">
+                        {new Date(comment.createdAt).toLocaleString('en-US')}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              <div className="grid gap-2 sm:grid-cols-[200px_minmax(0,1fr)]">
+                <div className="space-y-1">
+                  <Label htmlFor="task-detail-comment-author" className="text-xs text-muted-foreground">
+                    Addressed to
+                  </Label>
+                  <Select value={commentRecipient} onValueChange={setCommentRecipient}>
+                    <SelectTrigger id="task-detail-comment-author">
+                      <SelectValue placeholder="Anyone" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {members.map((member) => (
+                        <SelectItem key={member.id} value={member.name}>
+                          {member.name} ({member.role})
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-1">
+                  <Label htmlFor="task-detail-comment" className="text-xs text-muted-foreground">
+                    Comment
+                  </Label>
+                  <Textarea
+                    id="task-detail-comment"
+                    rows={2}
+                    placeholder="Ask for an opinion or leave a note..."
+                    value={commentDraft}
+                    onChange={(e) => setCommentDraft(e.target.value)}
+                  />
+                </div>
+              </div>
+              <div className="flex justify-end">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  data-testid="task-detail-add-comment"
+                  onClick={postComment}
+                  disabled={!commentDraft.trim()}
+                >
+                  Post Comment
+                </Button>
+              </div>
+            </div>
+
+            {/* Related / follow-up tickets */}
+            <div className="space-y-2">
+              <Label htmlFor="task-detail-related" className="flex items-center gap-1.5">
+                <Link2 className="h-3.5 w-3.5" />
+                Related Tickets
+              </Label>
+              {relatedTasks.length > 0 && (
+                <div className="flex flex-wrap gap-2">
+                  {relatedTasks.map((t) => (
+                    <Badge
+                      key={t.id}
+                      variant="outline"
+                      data-agrune-demo="task-detail-related-item"
+                      data-related-id={t.id}
+                      className="text-xs"
+                    >
+                      {t.title}
+                    </Badge>
+                  ))}
+                </div>
+              )}
+              <Select value={relatedDraft} onValueChange={linkRelated}>
+                <SelectTrigger id="task-detail-related" className="sm:max-w-sm">
+                  <SelectValue placeholder="Link a related ticket..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {linkableTasks.map((t) => (
+                    <SelectItem key={t.id} value={t.id}>
+                      {t.title}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
             <div className="grid gap-4 sm:grid-cols-[minmax(0,1fr)_180px]">

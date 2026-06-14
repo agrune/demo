@@ -33,6 +33,13 @@
           "desc": "Open the workflow editor.",
           "selector": { "testId": "nav-workflow-tab" },
           "actionKinds": ["click"]
+        },
+        {
+          "targetId": "nav_messenger_tab",
+          "name": "Messenger tab",
+          "desc": "Open the team messenger to direct-message teammates.",
+          "selector": { "testId": "nav-messenger-tab" },
+          "actionKinds": ["click"]
         }
       ]
     },
@@ -319,6 +326,34 @@
           "actionKinds": ["click"]
         },
         {
+          "targetId": "task_detail_comment_input",
+          "name": "Task comment",
+          "desc": "Write a comment or opinion request on the task.",
+          "selector": { "css": "#task-detail-comment" },
+          "actionKinds": ["fill"]
+        },
+        {
+          "targetId": "task_detail_comment_author_select",
+          "name": "Comment recipient",
+          "desc": "Choose which teammate the comment is addressed to.",
+          "selector": { "css": "#task-detail-comment-author" },
+          "actionKinds": ["click"]
+        },
+        {
+          "targetId": "task_detail_add_comment_button",
+          "name": "Post comment",
+          "desc": "Post the written comment to the task thread.",
+          "selector": { "testId": "task-detail-add-comment" },
+          "actionKinds": ["click"]
+        },
+        {
+          "targetId": "task_detail_related_select",
+          "name": "Link related ticket",
+          "desc": "Open the picker to link a related or follow-up ticket.",
+          "selector": { "css": "#task-detail-related" },
+          "actionKinds": ["click"]
+        },
+        {
           "targetId": "task_detail_tag_toggle_indexed",
           "name": "Task detail tag toggle",
           "desc": "Toggle one of the task detail tags by index.",
@@ -421,6 +456,20 @@
               "desc": "Visible member table row.",
               "selector": { "css": "[data-agrune-demo=\"member-row\"]" },
               "actionKinds": ["hover"]
+            },
+            {
+              "targetId": "member_create_ticket",
+              "name": "Create ticket for member",
+              "desc": "Open the new-task wizard with this member pre-assigned.",
+              "selector": { "css": "[data-agrune-demo=\"member-create-ticket\"]" },
+              "actionKinds": ["click"]
+            },
+            {
+              "targetId": "member_message",
+              "name": "Message member",
+              "desc": "Open the messenger conversation with this member.",
+              "selector": { "css": "[data-agrune-demo=\"member-message\"]" },
+              "actionKinds": ["click"]
             }
           ]
         },
@@ -634,6 +683,68 @@
               "desc": "Click a workflow edge to delete it.",
               "selector": { "css": ".react-flow__edge-interaction" },
               "actionKinds": ["click", "hover"]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "groupId": "messenger",
+      "name": "Team messenger",
+      "desc": "Direct-message teammates: pick a conversation, type, and send.",
+      "targets": [
+        {
+          "targetId": "messenger_input",
+          "name": "Message input",
+          "desc": "Type a direct message to the selected teammate.",
+          "selector": { "css": "#messenger-input" },
+          "actionKinds": ["fill"]
+        },
+        {
+          "targetId": "messenger_send_button",
+          "name": "Send message",
+          "desc": "Send the typed direct message.",
+          "selector": { "testId": "messenger-send-button" },
+          "actionKinds": ["click"]
+        },
+        {
+          "targetId": "messenger_conversation_indexed",
+          "name": "Open conversation",
+          "desc": "Open one of the teammate conversations by index.",
+          "selector": { "css": "[data-agrune-demo=\"messenger-conversation\"]" },
+          "actionKinds": ["click"]
+        }
+      ],
+      "repeats": [
+        {
+          "repeatId": "messenger_conversations",
+          "template": "conversation_${key}",
+          "keyFrom": "el.dataset.memberId ?? \"\"",
+          "nameFrom": "(el.textContent ?? \"\").trim()",
+          "strategy": "dom",
+          "targets": [
+            {
+              "targetId": "messenger_conversation",
+              "name": "Open conversation",
+              "desc": "Open the conversation with this teammate.",
+              "selector": { "css": "[data-agrune-demo=\"messenger-conversation\"]" },
+              "actionKinds": ["click"]
+            }
+          ]
+        },
+        {
+          "repeatId": "messenger_messages",
+          "template": "message_${key}",
+          "keyFrom": "el.dataset.messageId ?? \"\"",
+          "nameFrom": "(el.textContent ?? \"\").trim()",
+          "strategy": "dom",
+          "targets": [
+            {
+              "targetId": "messenger_message",
+              "name": "Message bubble",
+              "desc": "A message in the current conversation.",
+              "selector": { "css": "[data-agrune-demo=\"messenger-message\"]" },
+              "actionKinds": ["hover"]
             }
           ]
         }

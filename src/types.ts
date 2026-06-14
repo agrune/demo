@@ -1,6 +1,15 @@
 export type TaskStatus = 'todo' | 'in-progress' | 'in-review' | 'done'
 export type TaskPriority = 'low' | 'medium' | 'high'
 
+export interface TaskComment {
+  id: string
+  body: string
+  /** the member the comment is addressed to (e.g. an opinion request) */
+  recipient?: string
+  author?: string
+  createdAt: string
+}
+
 export interface Task {
   id: string
   title: string
@@ -13,6 +22,10 @@ export interface Task {
   dueDate?: string
   tags?: string[]
   estimatedHours?: number
+  /** opinion / discussion thread on the task */
+  comments?: TaskComment[]
+  /** ids of related / follow-up tasks */
+  relatedTo?: string[]
 }
 
 export const AVAILABLE_TAGS = [
@@ -45,11 +58,24 @@ export interface Member {
   status: 'active' | 'inactive'
   joinedAt: string
   avatar: string
+  /** areas of expertise — lets workflows find "a developer skilled in X" */
+  skills?: string[]
+  department?: string
 }
 
 export interface ProjectData {
   tasks: Task[]
   members: Member[]
+}
+
+/** A direct message in the team messenger (member ⇆ me). */
+export interface ChatMessage {
+  id: string
+  /** the member this conversation is with */
+  memberId: string
+  from: 'me' | 'them'
+  body: string
+  timestamp: number
 }
 
 export const COLUMNS: { id: TaskStatus; label: string }[] = [

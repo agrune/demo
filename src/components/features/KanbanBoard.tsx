@@ -4,7 +4,7 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { TaskDetailDialog } from '@/components/features/TaskDetailDialog'
 import { GripVertical, Plus, Trash2 } from 'lucide-react'
-import type { Member, Task, TaskStatus } from '@/types'
+import type { Member, Task, TaskComment, TaskStatus } from '@/types'
 import { COLUMNS, PRIORITY_COLORS, STATUS_COLORS } from '@/types'
 import { cn } from '@/lib/utils'
 
@@ -142,6 +142,19 @@ export function KanbanBoard({ tasks, members, onTasksChange, onNewTask }: Kanban
     onTasksChange([...untouchedTasks, ...sourceColumnTasks, ...targetColumnTasks])
   }
 
+  const handleAddComment = (taskId: string, comment: TaskComment) => {
+    const t = tasks.find((task) => task.id === taskId)
+    if (!t) return
+    handleUpdateTask({ ...t, comments: [...(t.comments ?? []), comment] })
+  }
+
+  const handleLinkTask = (taskId: string, relatedId: string) => {
+    const t = tasks.find((task) => task.id === taskId)
+    if (!t || taskId === relatedId) return
+    if ((t.relatedTo ?? []).includes(relatedId)) return
+    handleUpdateTask({ ...t, relatedTo: [...(t.relatedTo ?? []), relatedId] })
+  }
+
   return (
     <>
       <div className="space-y-4">
@@ -152,7 +165,7 @@ export function KanbanBoard({ tasks, members, onTasksChange, onNewTask }: Kanban
               Drag tasks between columns, or double-click any card to inspect and edit it.
             </p>
           </div>
-          <Button onClick={onNewTask} size="sm">
+          <Button onClick={onNewTask} size="sm" data-testid="board-new-task-button">
             <Plus className="mr-1 h-4 w-4" />
             New Task
           </Button>
@@ -277,10 +290,13 @@ export function KanbanBoard({ tasks, members, onTasksChange, onNewTask }: Kanban
         task={selectedTask}
         open={selectedTask !== null}
         members={members}
+        allTasks={tasks}
         onOpenChange={(open) => {
           if (!open) setSelectedTaskId(null)
         }}
         onSave={handleUpdateTask}
+        onAddComment={handleAddComment}
+        onLinkTask={handleLinkTask}
       />
     </>
   )

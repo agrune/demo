@@ -1,21 +1,25 @@
-import { useCallback } from 'react'
+import { useCallback, useState } from 'react'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { KanbanBoard } from '@/components/features/KanbanBoard'
 import { TaskWizard } from '@/components/features/TaskWizard'
 import { MemberTable } from '@/components/features/MemberTable'
 import { DocumentViewer } from '@/components/features/DocumentViewer'
+import { Messenger } from '@/components/features/Messenger'
 import { useLocalStorage } from '@/hooks/useLocalStorage'
-import { SEED_TASKS, SEED_MEMBERS } from '@/seed-data'
-import { LayoutDashboard, KanbanSquare, Users, FileText, Workflow } from 'lucide-react'
+import { SEED_TASKS, SEED_MEMBERS, SEED_MESSAGES } from '@/seed-data'
+import { LayoutDashboard, KanbanSquare, Users, FileText, Workflow, MessageSquare } from 'lucide-react'
 import { WorkflowEditor } from '@/components/features/WorkflowEditor'
 import { SEED_WORKFLOW_NODES, SEED_WORKFLOW_EDGES } from '@/seed-data'
-import type { Task, Member } from '@/types'
+import type { Task, Member, ChatMessage } from '@/types'
 
 function App() {
   const [tasks, setTasks] = useLocalStorage<Task[]>('pm-tasks', SEED_TASKS)
   const [members] = useLocalStorage<Member[]>('pm-members', SEED_MEMBERS)
+  const [messages, setMessages] = useLocalStorage<Record<string, ChatMessage[]>>('pm-messages', SEED_MESSAGES)
   const [wizardOpen, setWizardOpen] = useLocalStorage<boolean>('pm-wizard-open', false)
   const [activeTab, setActiveTab] = useLocalStorage<string>('pm-active-tab', 'board')
+  const [wizardPrefillAssignee, setWizardPrefillAssignee] = useState<string>('')
+  const [activeConversationId, setActiveConversationId] = useState<string | null>(null)
 
   const handleNewTask = useCallback(
     (taskData: Omit<Task, 'id' | 'order' | 'createdAt'>) => {
@@ -31,6 +35,30 @@ function App() {
     },
     [tasks, setTasks]
   )
+
+  const handleSendMessage = useCallback(
+    (memberId: string, body: string) => {
+      const msg: ChatMessage = {
+        id: `msg-${Date.now()}`,
+        memberId,
+        from: 'me',
+        body,
+        timestamp: Date.now(),
+      }
+      setMessages((prev) => ({ ...prev, [memberId]: [...(prev[memberId] ?? []), msg] }))
+    },
+    [setMessages]
+  )
+
+  const handleCreateTicketForMember = useCallback((member: Member) => {
+    setWizardPrefillAssignee(member.name)
+    setWizardOpen(true)
+  }, [setWizardOpen])
+
+  const handleMessageMember = useCallback((member: Member) => {
+    setActiveConversationId(member.id)
+    setActiveTab('messenger')
+  }, [setActiveTab])
 
   return (
     <div className="min-h-screen bg-background">
@@ -52,7 +80,7 @@ function App() {
       {/* Main Content */}
       <main className="max-w-[1400px] mx-auto px-6 py-6">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full max-w-md grid-cols-4">
+          <TabsList className="grid w-full max-w-2xl grid-cols-5">
             <TabsTrigger value="board" className="gap-1.5" data-testid="nav-board-tab">
               <KanbanSquare className="h-4 w-4" />
               Board
@@ -69,6 +97,10 @@ function App() {
               <Workflow className="h-4 w-4" />
               Workflow
             </TabsTrigger>
+            <TabsTrigger value="messenger" className="gap-1.5" data-testid="nav-messenger-tab">
+              <MessageSquare className="h-4 w-4" />
+              Messenger
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="board">
@@ -76,12 +108,19 @@ function App() {
               tasks={tasks}
               members={members}
               onTasksChange={setTasks}
-              onNewTask={() => setWizardOpen(true)}
+              onNewTask={() => {
+                setWizardPrefillAssignee('')
+                setWizardOpen(true)
+              }}
             />
           </TabsContent>
 
           <TabsContent value="members">
-            <MemberTable members={members} />
+            <MemberTable
+              members={members}
+              onCreateTicket={handleCreateTicketForMember}
+              onMessageMember={handleMessageMember}
+            />
           </TabsContent>
 
           <TabsContent value="docs">
@@ -94,6 +133,16 @@ function App() {
               initialEdges={SEED_WORKFLOW_EDGES}
             />
           </TabsContent>
+
+          <TabsContent value="messenger">
+            <Messenger
+              members={members}
+              messages={messages}
+              activeConversationId={activeConversationId}
+              onSelectConversation={setActiveConversationId}
+              onSendMessage={handleSendMessage}
+            />
+          </TabsContent>
         </Tabs>
       </main>
 
@@ -102,6 +151,7 @@ function App() {
         open={wizardOpen}
         onOpenChange={setWizardOpen}
         members={members}
+        prefillAssignee={wizardPrefillAssignee}
         onSubmit={handleNewTask}
       />
     </div>
