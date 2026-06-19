@@ -21,9 +21,10 @@ import {
 } from '@/components/ui/select'
 import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
-import { CheckCircle2, AlertCircle, X, Calendar, Clock, Tag } from 'lucide-react'
+import { CheckCircle2, AlertCircle, X, Calendar, Clock, Tag, ChevronDown, Eye, EyeOff, Sparkles } from 'lucide-react'
 import type { Task, TaskStatus, TaskPriority, Member } from '@/types'
 import { PRIORITY_COLORS, STATUS_COLORS, AVAILABLE_TAGS, TAG_COLORS } from '@/types'
+import { MemberCombobox } from '@/components/features/MemberCombobox'
 import { cn } from '@/lib/utils'
 
 interface TaskWizardProps {
@@ -44,6 +45,8 @@ interface WizardData {
   dueDate: string
   tags: string[]
   estimatedHours: string
+  storyPoints: string
+  reviewer: string
 }
 
 type WizardErrors = Partial<Record<keyof WizardData, string>>
@@ -60,12 +63,19 @@ const INITIAL_DATA: WizardData = {
   dueDate: '',
   tags: [],
   estimatedHours: '',
+  storyPoints: '',
+  reviewer: '',
 }
 
 export function TaskWizard({ open, onOpenChange, members, prefillAssignee, onSubmit }: TaskWizardProps) {
   const [step, setStep] = useState<StepIndex>(0)
   const [errors, setErrors] = useState<WizardErrors>({})
   const [data, setData] = useState<WizardData>({ ...INITIAL_DATA })
+  // Step-2 disclosure UI. `advancedOpen` mounts extra fields (a structural delta);
+  // `showPreview` reveals a read-only text block (a purely cosmetic toggle — no new
+  // actionable element, so an observer should treat it as "no change").
+  const [advancedOpen, setAdvancedOpen] = useState(false)
+  const [showPreview, setShowPreview] = useState(false)
 
   // On open, start fresh — optionally with a pre-filled assignee (from a member action).
   useEffect(() => {
@@ -73,6 +83,8 @@ export function TaskWizard({ open, onOpenChange, members, prefillAssignee, onSub
       setStep(0)
       setErrors({})
       setData({ ...INITIAL_DATA, assignee: prefillAssignee ?? '' })
+      setAdvancedOpen(false)
+      setShowPreview(false)
     }
   }, [open, prefillAssignee])
 
@@ -80,6 +92,8 @@ export function TaskWizard({ open, onOpenChange, members, prefillAssignee, onSub
     setStep(0)
     setErrors({})
     setData({ ...INITIAL_DATA })
+    setAdvancedOpen(false)
+    setShowPreview(false)
   }
 
   const validateStep = (currentStep: StepIndex): boolean => {
@@ -131,6 +145,10 @@ export function TaskWizard({ open, onOpenChange, members, prefillAssignee, onSub
     if (data.estimatedHours && Number(data.estimatedHours) > 0) {
       taskData.estimatedHours = Number(data.estimatedHours)
     }
+    if (data.storyPoints && Number(data.storyPoints) > 0) {
+      taskData.storyPoints = Number(data.storyPoints)
+    }
+    if (data.reviewer.trim()) taskData.reviewer = data.reviewer.trim()
 
     onSubmit(taskData)
     resetWizard()
@@ -256,30 +274,21 @@ export function TaskWizard({ open, onOpenChange, members, prefillAssignee, onSub
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="task-assignee">
+                <Label>
                   Assignee <span className="text-destructive">*</span>
                 </Label>
-                <Select
+                <MemberCombobox
+                  members={activeMembers}
                   value={data.assignee}
-                  onValueChange={(v) => {
-                    setData({ ...data, assignee: v })
-                    if (errors.assignee) setErrors({ ...errors, assignee: undefined })
+                  onChange={(name) => {
+                    setData((d) => ({ ...d, assignee: name }))
+                    if (errors.assignee) setErrors((e) => ({ ...e, assignee: undefined }))
                   }}
-                >
-                  <SelectTrigger
-                    id="task-assignee"
-                    className={errors.assignee ? 'border-destructive' : ''}
-                  >
-                    <SelectValue placeholder="Select a team member..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {activeMembers.map((m) => (
-                      <SelectItem key={m.id} value={m.name}>
-                        {m.name} ({m.role})
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                  triggerTestId="wizard-assignee-combobox"
+                  searchId="wizard-assignee-search"
+                  optionDemo="wizard-assignee-option"
+                  invalid={!!errors.assignee}
+                />
                 {errors.assignee && (
                   <p className="text-xs text-destructive flex items-center gap-1">
                     <AlertCircle className="h-3 w-3" />
@@ -313,6 +322,28 @@ export function TaskWizard({ open, onOpenChange, members, prefillAssignee, onSub
                     <AlertCircle className="h-3 w-3" />
                     {errors.description}
                   </p>
+                )}
+                {/* Purely cosmetic toggle: reveals a read-only preview (no interactive
+                    element), and keeps a stable aria-label so its accessible name does
+                    not change between states. */}
+                <button
+                  type="button"
+                  data-testid="wizard-description-preview-toggle"
+                  aria-label="Toggle description preview"
+                  aria-pressed={showPreview}
+                  onClick={() => setShowPreview((s) => !s)}
+                  className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground"
+                >
+                  {showPreview ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
+                  {showPreview ? 'Hide preview' : 'Show preview'}
+                </button>
+                {showPreview && (
+                  <div
+                    data-agrune-demo="description-preview"
+                    className="rounded-md border bg-muted/30 p-3 text-sm text-muted-foreground whitespace-pre-wrap"
+                  >
+                    {data.description.trim() || 'Nothing to preview yet.'}
+                  </div>
                 )}
               </div>
 
@@ -391,6 +422,52 @@ export function TaskWizard({ open, onOpenChange, members, prefillAssignee, onSub
                   <p className="text-xs text-muted-foreground">
                     {data.tags.length} tag{data.tags.length !== 1 ? 's' : ''} selected
                   </p>
+                )}
+              </div>
+
+              {/* Collapsible "Advanced options": expanding MOUNTS two extra inputs (a
+                  structural delta an observer must re-read); collapsing unmounts them. */}
+              <div className="space-y-2">
+                <button
+                  type="button"
+                  data-testid="wizard-advanced-toggle"
+                  aria-label="Toggle advanced options"
+                  aria-expanded={advancedOpen}
+                  onClick={() => setAdvancedOpen((o) => !o)}
+                  className="flex w-full items-center justify-between rounded-md border bg-muted/30 px-3 py-2 text-sm font-medium hover:bg-muted"
+                >
+                  <span className="flex items-center gap-1.5">
+                    <Sparkles className="h-3.5 w-3.5" />
+                    Advanced options
+                  </span>
+                  <ChevronDown
+                    className={cn('h-4 w-4 transition-transform', advancedOpen && 'rotate-180')}
+                  />
+                </button>
+                {advancedOpen && (
+                  <div className="grid grid-cols-2 gap-3 rounded-md border border-dashed p-3">
+                    <div className="space-y-2">
+                      <Label htmlFor="task-story-points">Story Points</Label>
+                      <Input
+                        id="task-story-points"
+                        type="number"
+                        min="0"
+                        max="100"
+                        placeholder="e.g. 5"
+                        value={data.storyPoints}
+                        onChange={(e) => setData((d) => ({ ...d, storyPoints: e.target.value }))}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="task-reviewer">Reviewer</Label>
+                      <Input
+                        id="task-reviewer"
+                        placeholder="Reviewer name..."
+                        value={data.reviewer}
+                        onChange={(e) => setData((d) => ({ ...d, reviewer: e.target.value }))}
+                      />
+                    </div>
+                  </div>
                 )}
               </div>
             </div>

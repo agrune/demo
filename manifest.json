@@ -56,7 +56,8 @@
             "role": { "name": "button", "level": "New Task" },
             "text": "New Task"
           },
-          "actionKinds": ["click"]
+          "actionKinds": ["click"],
+          "onSuccess": "The task creation wizard opened. It collects details across several steps; fill the fields shown on the current step, then use Next to advance."
         },
         {
           "targetId": "board_column_todo",
@@ -168,18 +169,28 @@
           "actionKinds": ["click"]
         },
         {
-          "targetId": "wizard_assignee_select",
+          "targetId": "wizard_assignee_combobox",
           "name": "Wizard assignee",
-          "desc": "Open the assignee picker in the new task wizard.",
-          "selector": { "css": "#task-assignee" },
-          "actionKinds": ["click"]
+          "desc": "Open the teammate picker. Type to filter, then click one name; selecting it sets the assignee and closes the picker — you do not need to reopen it to confirm.",
+          "selector": { "testId": "wizard-assignee-combobox" },
+          "actionKinds": ["click"],
+          "alwaysDesc": true,
+          "onSuccess": "The assignee picker opened. Type in its search field to filter teammates, then click the teammate you want from the listed options."
+        },
+        {
+          "targetId": "wizard_assignee_search",
+          "name": "Wizard assignee search",
+          "desc": "Type to filter the open assignee combobox by name or role.",
+          "selector": { "css": "#wizard-assignee-search" },
+          "actionKinds": ["fill"]
         },
         {
           "targetId": "wizard_description_input",
           "name": "Wizard description",
-          "desc": "Fill the task description in the new task wizard.",
+          "desc": "Task description. Required: the wizard will not advance to the next step until this field has text.",
           "selector": { "css": "#task-description" },
-          "actionKinds": ["fill"]
+          "actionKinds": ["fill"],
+          "alwaysDesc": true
         },
         {
           "targetId": "wizard_due_date_input",
@@ -200,21 +211,26 @@
           "name": "Wizard back",
           "desc": "Move to the previous wizard step.",
           "selector": { "testId": "wizard-back-button" },
-          "actionKinds": ["click"]
+          "actionKinds": ["click"],
+          "onSuccess": "Moved back to the previous wizard step; its fields are shown again."
         },
         {
           "targetId": "wizard_next_button",
           "name": "Wizard next",
           "desc": "Move to the next wizard step.",
           "selector": { "testId": "wizard-next-button" },
-          "actionKinds": ["click"]
+          "actionKinds": ["click"],
+          "onSuccess": "Advanced to the next wizard step. Read the newly shown fields before continuing.",
+          "onNoEffect": "Still on the same step — Next is blocked because a required field here is empty or invalid. Complete the required field(s) shown on this step (for example, the description), then press Next again."
         },
         {
           "targetId": "wizard_create_task_button",
           "name": "Wizard create task",
           "desc": "Create the task from the wizard confirmation step.",
           "selector": { "testId": "wizard-create-task-button" },
-          "actionKinds": ["click"]
+          "actionKinds": ["click"],
+          "onSuccess": "The task was created and the wizard closed — you are back on the board, where the new task now appears as a card.",
+          "onNoEffect": "The task was not created — a required field is still missing, so the wizard stayed open. Complete the required field(s), then create again."
         },
         {
           "targetId": "wizard_close_button",
@@ -222,6 +238,34 @@
           "desc": "Close the task creation wizard.",
           "selector": { "testId": "wizard-close-button" },
           "actionKinds": ["click"]
+        },
+        {
+          "targetId": "wizard_description_preview_toggle",
+          "name": "Wizard description preview toggle",
+          "desc": "Show or hide the read-only description preview (step 2). Cosmetic only — reveals no new control.",
+          "selector": { "testId": "wizard-description-preview-toggle" },
+          "actionKinds": ["click"]
+        },
+        {
+          "targetId": "wizard_advanced_toggle",
+          "name": "Wizard advanced options toggle",
+          "desc": "Expand or collapse the advanced options section (step 2), which reveals the story points and reviewer fields.",
+          "selector": { "testId": "wizard-advanced-toggle" },
+          "actionKinds": ["click"]
+        },
+        {
+          "targetId": "wizard_story_points_input",
+          "name": "Wizard story points",
+          "desc": "Fill the story points estimate. Inside advanced options — expand it first.",
+          "selector": { "css": "#task-story-points" },
+          "actionKinds": ["fill"]
+        },
+        {
+          "targetId": "wizard_reviewer_input",
+          "name": "Wizard reviewer",
+          "desc": "Fill the reviewer name. Inside advanced options — expand it first.",
+          "selector": { "css": "#task-reviewer" },
+          "actionKinds": ["fill"]
         },
         {
           "targetId": "wizard_tag_toggle_indexed",
@@ -245,6 +289,23 @@
               "desc": "Toggle a tag in the task creation wizard.",
               "selector": { "css": "[data-agrune-demo=\"wizard-tag\"]" },
               "actionKinds": ["click"]
+            }
+          ]
+        },
+        {
+          "repeatId": "wizard_assignee_options",
+          "template": "wizard_assignee_${key}",
+          "keyFrom": "(el.textContent ?? \"\").trim().toLowerCase().replace(/[^a-z0-9]+/g, \"-\").replace(/^-|-$/g, \"\")",
+          "nameFrom": "(el.textContent ?? \"\").trim()",
+          "strategy": "dom",
+          "targets": [
+            {
+              "targetId": "wizard_assignee_option",
+              "name": "Wizard assignee option",
+              "desc": "Choose a teammate from the open assignee combobox list.",
+              "selector": { "css": "[data-agrune-demo=\"wizard-assignee-option\"]" },
+              "actionKinds": ["click"],
+              "onSuccess": "Assignee set — the picker closed and the chosen teammate is now the assignee. Move on; do not reopen the picker unless you need a different person."
             }
           ]
         }
@@ -782,7 +843,8 @@
                 "role": { "name": "option" },
                 "css": "[role=\"option\"]"
               },
-              "actionKinds": ["click"]
+              "actionKinds": ["click"],
+              "onSuccess": "Option selected — the dropdown closed and the value is now set. Continue; do not reopen this dropdown unless you need to change the value."
             }
           ]
         }

@@ -37,17 +37,43 @@ function App() {
   )
 
   const handleSendMessage = useCallback(
-    (memberId: string, body: string) => {
-      const msg: ChatMessage = {
+    async (memberId: string, body: string) => {
+      const myMsg: ChatMessage = {
         id: `msg-${Date.now()}`,
         memberId,
         from: 'me',
         body,
         timestamp: Date.now(),
       }
-      setMessages((prev) => ({ ...prev, [memberId]: [...(prev[memberId] ?? []), msg] }))
+
+      const nextThread = [...(messages[memberId] ?? []), myMsg]
+      setMessages((prev) => ({ ...prev, [memberId]: nextThread }))
+
+      try {
+        const res = await fetch('/api/npc-reply', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({
+            memberId,
+            messages: nextThread.map((message) => ({ from: message.from, body: message.body })),
+          }),
+        })
+        const json = await res.json()
+        if (json?.reply) {
+          const themMsg: ChatMessage = {
+            id: `msg-${Date.now()}-npc`,
+            memberId,
+            from: 'them',
+            body: json.reply,
+            timestamp: Date.now(),
+          }
+          setMessages((prev) => ({ ...prev, [memberId]: [...(prev[memberId] ?? []), themMsg] }))
+        }
+      } catch (error) {
+        console.error(error)
+      }
     },
-    [setMessages]
+    [messages, setMessages]
   )
 
   const handleCreateTicketForMember = useCallback((member: Member) => {

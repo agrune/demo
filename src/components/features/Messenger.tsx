@@ -55,7 +55,7 @@ export function Messenger({
 
       <div className="grid grid-cols-[260px_minmax(0,1fr)] gap-0 rounded-lg border overflow-hidden h-[560px]">
         {/* Conversation list */}
-        <div className="border-r bg-muted/20 overflow-y-auto" data-agrune-demo="messenger-conversation-list">
+        <div className="border-r bg-muted/20 overflow-y-auto min-h-0" data-agrune-demo="messenger-conversation-list">
           {members.map((member) => {
             const last = (messages[member.id] ?? []).slice(-1)[0]
             const online = member.status === 'active'
@@ -93,7 +93,7 @@ export function Messenger({
         </div>
 
         {/* Thread */}
-        <div className="flex flex-col min-w-0">
+        <div className="flex flex-col min-w-0 min-h-0">
           {activeMember ? (
             <>
               <div className="border-b px-4 py-3 flex items-center gap-3">
@@ -108,7 +108,7 @@ export function Messenger({
                 </div>
               </div>
 
-              <div className="flex-1 overflow-y-auto p-4 space-y-3">
+              <div className="flex-1 overflow-y-auto p-4 space-y-3 min-h-0">
                 {thread.length === 0 && (
                   <p className="text-center text-sm text-muted-foreground mt-8">
                     No messages yet. Say hello to {activeMember.name}.

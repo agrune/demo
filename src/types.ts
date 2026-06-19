@@ -22,6 +22,10 @@ export interface Task {
   dueDate?: string
   tags?: string[]
   estimatedHours?: number
+  /** advanced: relative effort estimate (story points) */
+  storyPoints?: number
+  /** advanced: assigned reviewer (member name) */
+  reviewer?: string
   /** opinion / discussion thread on the task */
   comments?: TaskComment[]
   /** ids of related / follow-up tasks */
