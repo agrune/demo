@@ -220,6 +220,12 @@ export function WorkflowEditor({ initialNodes, initialEdges }: WorkflowEditorPro
             defaultEdgeOptions={defaultEdgeOptions}
             fitView
             fitViewOptions={{ padding: 0.2 }}
+            // Deterministic agrune-driven node drags: threshold 0 pins the grab
+            // origin to the pointerdown point (so a drag lands exactly at the
+            // destination), and disabling auto-pan keeps the coordinate frame
+            // fixed mid-drag. fitView stays on so every seeded node is in-pane.
+            nodeDragThreshold={0}
+            autoPanOnNodeDrag={false}
           >
             <Background />
             <Controls />

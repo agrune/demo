@@ -615,7 +615,11 @@
     {
       "groupId": "workflow",
       "name": "Workflow editor",
-      "desc": "Targets for workflow canvas controls, nodes, handles, and edges.",
+      "desc": "Targets for workflow canvas controls, nodes, handles, and edges. Node positions are reported as stable canvas coordinates; browser_drag with destinationCoords moves a node to a canvas point (auto-converted to viewport).",
+      "canvas": {
+        "viewportSelector": ".agrune-workflow-flow .react-flow__viewport",
+        "paneSelector": "[data-agrune-demo=\"workflow-canvas\"]"
+      },
       "targets": [
         {
           "targetId": "workflow_canvas_pane",
