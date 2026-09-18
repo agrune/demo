@@ -130,12 +130,45 @@ async function getNpcReply({ memberId, messages } = {}) {
     .trim()
 }
 
+// Most-recent user-authored line in the thread (what the NPC is replying to).
+function lastUserText(messages) {
+  if (!Array.isArray(messages)) return ''
+  for (let i = messages.length - 1; i >= 0; i--) {
+    const m = messages[i]
+    if (m && m.from === 'me' && typeof m.body === 'string') return m.body
+  }
+  return ''
+}
+
+// "Are you asking what to do / register today?" — the same intent the live NPC's
+// persona prompt is told to answer ("오늘 할 일/일감/뭐 하면 돼/today/task/work").
+const TASK_ASK_RE = /오늘|할\s*일|일감|뭐\s*(하|할|함|해|돼|되)|today|task|work|등록|새\s*티켓|ticket|register/i
+
+// Deterministic, fact-driven reply used when the live NPC LLM is unreachable
+// (no proxy). It mirrors the persona rule — reveal today's task ONLY when actually
+// asked — so the bench stays reproducible and S7 is still scorable offline. The
+// answer carries the authored todayTask title verbatim (never invented).
+function deterministicReply({ memberId, messages } = {}) {
+  const facts = readFacts()
+  const member = facts.members?.[memberId]
+  const asked = TASK_ASK_RE.test(lastUserText(messages))
+  if (member?.todayTask && asked) {
+    const t = member.todayTask
+    return `오늘은 '${t.title}' 건을 새 티켓으로 등록해 주세요. ${t.summary} 담당은 ${t.assigneeHint}.`
+  }
+  if (member && !member.todayTask && asked) {
+    return facts.default?.noTaskLine || FALLBACK_REPLY
+  }
+  return FALLBACK_REPLY
+}
+
 export async function npcReply(payload) {
   try {
     const reply = await getNpcReply(payload)
-    return { reply: reply || FALLBACK_REPLY }
+    if (reply) return { reply }
   } catch (error) {
     console.error(safeError(error))
-    return { reply: FALLBACK_REPLY }
   }
+  // Live NPC empty/unreachable → deterministic fact-driven fallback (offline-safe).
+  return { reply: deterministicReply(payload) }
 }

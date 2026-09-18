@@ -11,35 +11,40 @@
           "name": "Board tab",
           "desc": "Open the kanban board.",
           "selector": { "testId": "nav-board-tab" },
-          "actionKinds": ["click"]
+          "actionKinds": ["click"],
+          "onSuccess": "You are now on the Board (kanban). Create a ticket with 'New task'; double-click a card to open its details."
         },
         {
           "targetId": "nav_members_tab",
           "name": "Members tab",
           "desc": "Open the team member table.",
           "selector": { "testId": "nav-members-tab" },
-          "actionKinds": ["click"]
+          "actionKinds": ["click"],
+          "onSuccess": "You are now on the Members directory. Each row shows a teammate's role and active/inactive status."
         },
         {
           "targetId": "nav_docs_tab",
           "name": "Docs tab",
           "desc": "Open the document viewer.",
           "selector": { "testId": "nav-docs-tab" },
-          "actionKinds": ["click"]
+          "actionKinds": ["click"],
+          "onSuccess": "You are now on the Docs view."
         },
         {
           "targetId": "nav_workflow_tab",
           "name": "Workflow tab",
           "desc": "Open the workflow editor.",
           "selector": { "testId": "nav-workflow-tab" },
-          "actionKinds": ["click"]
+          "actionKinds": ["click"],
+          "onSuccess": "You are now on the Workflow canvas."
         },
         {
           "targetId": "nav_messenger_tab",
           "name": "Messenger tab",
           "desc": "Open the team messenger to direct-message teammates.",
           "selector": { "testId": "nav-messenger-tab" },
-          "actionKinds": ["click"]
+          "actionKinds": ["click"],
+          "onSuccess": "You are now on the Messenger. Pick a conversation on the left, then type in the message box and Send. To create a ticket instead, switch to the Board tab."
         }
       ]
     },
@@ -174,7 +179,6 @@
           "desc": "Open the teammate picker. Type to filter, then click one name; selecting it sets the assignee and closes the picker — you do not need to reopen it to confirm.",
           "selector": { "testId": "wizard-assignee-combobox" },
           "actionKinds": ["click"],
-          "alwaysDesc": true,
           "onSuccess": "The assignee picker opened. Type in its search field to filter teammates, then click the teammate you want from the listed options."
         },
         {
@@ -189,8 +193,7 @@
           "name": "Wizard description",
           "desc": "Task description. Required: the wizard will not advance to the next step until this field has text.",
           "selector": { "css": "#task-description" },
-          "actionKinds": ["fill"],
-          "alwaysDesc": true
+          "actionKinds": ["fill"]
         },
         {
           "targetId": "wizard_due_date_input",
