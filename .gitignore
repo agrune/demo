@@ -22,3 +22,7 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# demo backend data (reset: POST /api/reset)
+.demo-data
+.playwright-cli

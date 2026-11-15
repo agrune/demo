@@ -29,11 +29,14 @@ import {
   TAG_COLORS,
 } from '@/types'
 import { cn } from '@/lib/utils'
+import { TaskReactions } from '@/components/features/TaskReactions'
+import { TaskAttachments } from '@/components/features/TaskAttachments'
 
 interface TaskDetailDialogProps {
   task: Task | null
   open: boolean
   members: Member[]
+  user: Member | undefined
   allTasks: Task[]
   onOpenChange: (open: boolean) => void
   onSave: (task: Task) => void
@@ -44,6 +47,7 @@ interface TaskDetailDialogProps {
 interface TaskDetailDialogContentProps {
   task: Task
   members: Member[]
+  user: Member | undefined
   allTasks: Task[]
   onOpenChange: (open: boolean) => void
   onSave: (task: Task) => void
@@ -106,6 +110,7 @@ export function TaskDetailDialog({
   task,
   open,
   members,
+  user,
   allTasks,
   onOpenChange,
   onSave,
@@ -119,6 +124,7 @@ export function TaskDetailDialog({
           key={task.id}
           task={task}
           members={members}
+          user={user}
           allTasks={allTasks}
           onOpenChange={onOpenChange}
           onSave={onSave}
@@ -133,6 +139,7 @@ export function TaskDetailDialog({
 function TaskDetailDialogContent({
   task,
   members,
+  user,
   allTasks,
   onOpenChange,
   onSave,
@@ -159,6 +166,7 @@ function TaskDetailDialogContent({
       id: `comment-${Date.now()}`,
       body,
       recipient: commentRecipient || undefined,
+      author: user?.name,
       createdAt: new Date().toISOString(),
     })
     setCommentDraft('')
@@ -276,6 +284,10 @@ function TaskDetailDialogContent({
               <p className="mt-3 text-sm text-muted-foreground">
                 {data.description.trim() || 'Add a description to explain the task context.'}
               </p>
+
+              <div className="mt-3">
+                <TaskReactions taskId={task.id} userId={user?.id ?? ''} />
+              </div>
 
               <div className="mt-4 flex flex-wrap gap-2">
                 <span className="inline-flex items-center gap-1.5 rounded-full border bg-background px-2.5 py-1 text-xs text-muted-foreground">
@@ -514,6 +526,8 @@ function TaskDetailDialogContent({
                 </Button>
               </div>
             </div>
+
+            <TaskAttachments taskId={task.id} userName={user?.name ?? ''} />
 
             {/* Related / follow-up tickets */}
             <div className="space-y-2">

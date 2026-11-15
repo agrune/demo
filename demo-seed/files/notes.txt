@@ -1,0 +1,3 @@
+notes for CI pipeline
+- cache pnpm store
+- run lint + typecheck + test in parallel

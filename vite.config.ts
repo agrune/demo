@@ -2,6 +2,8 @@ import { defineConfig, type Plugin } from 'vite'
 import react from '@vitejs/plugin-react-swc'
 import tailwindcss from '@tailwindcss/vite'
 import path from 'path'
+// @ts-expect-error plain js module
+import { handleApi } from './demo-api.mjs'
 
 function agruneAnnotationLint(): Plugin {
   return {
@@ -29,8 +31,19 @@ function agruneAnnotationLint(): Plugin {
   }
 }
 
+function demoApi(): Plugin {
+  return {
+    name: 'agrune-demo-api',
+    configureServer(server) {
+      server.middlewares.use((req, res, next) => {
+        handleApi(req, res).then((done: boolean) => { if (!done) next() }, next)
+      })
+    },
+  }
+}
+
 export default defineConfig({
-  plugins: [react(), tailwindcss(), agruneAnnotationLint()],
+  plugins: [react(), tailwindcss(), agruneAnnotationLint(), demoApi()],
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),
@@ -38,5 +51,6 @@ export default defineConfig({
   },
   server: {
     allowedHosts: ['localhost', '127.0.0.1'],
+    watch: { ignored: ['**/.demo-data/**', '**/.playwright-cli/**', '**/.agrune/**'] },
   },
 })

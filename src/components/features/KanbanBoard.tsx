@@ -3,7 +3,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { TaskDetailDialog } from '@/components/features/TaskDetailDialog'
-import { GripVertical, Plus, Trash2 } from 'lucide-react'
+import { ArrowRight, GripVertical, Plus, Trash2 } from 'lucide-react'
+import { api, type BoardSettings } from '@/api'
 import type { Member, Task, TaskComment, TaskStatus } from '@/types'
 import { COLUMNS, PRIORITY_COLORS, STATUS_COLORS } from '@/types'
 import { cn } from '@/lib/utils'
@@ -11,11 +12,26 @@ import { cn } from '@/lib/utils'
 interface KanbanBoardProps {
   tasks: Task[]
   members: Member[]
-  onTasksChange: (tasks: Task[]) => void
+  settings: BoardSettings
+  user: Member | undefined
+  onTasksChange: (value: Task[] | ((prev: Task[]) => Task[])) => void
   onNewTask: () => void
 }
 
-export function KanbanBoard({ tasks, members, onTasksChange, onNewTask }: KanbanBoardProps) {
+const NEXT_STATUS: Partial<Record<TaskStatus, TaskStatus>> = {
+  todo: 'in-progress',
+  'in-progress': 'in-review',
+  'in-review': 'done',
+}
+
+const LABELS = Object.fromEntries(COLUMNS.map((c) => [c.id, c.label])) as Record<TaskStatus, string>
+
+function isOverdue(task: Task) {
+  return !!task.dueDate && task.status !== 'done' && new Date(task.dueDate) < new Date()
+}
+
+export function KanbanBoard({ tasks, members, settings, user, onTasksChange, onNewTask }: KanbanBoardProps) {
+  const [notice, setNotice] = useState('')
   const [draggedTask, setDraggedTask] = useState<Task | null>(null)
   const [dragOverColumn, setDragOverColumn] = useState<TaskStatus | null>(null)
   const [dragOverTaskId, setDragOverTaskId] = useState<string | null>(null)
@@ -83,6 +99,18 @@ export function KanbanBoard({ tasks, members, onTasksChange, onNewTask }: Kanban
     e.stopPropagation()
     if (!draggedTask) return
 
+    const limit = settings.wipLimits[targetStatus]
+    const already = tasks.filter((t) => t.status === targetStatus && t.id !== draggedTask.id).length
+    if (limit && draggedTask.status !== targetStatus && already >= limit) {
+      setNotice(`${LABELS[targetStatus]} is full (${limit} of ${limit}). Finish a card there first.`)
+      setDraggedTask(null)
+      setDragOverColumn(null)
+      setDragOverTaskId(null)
+      dragCounter.current = {}
+      return
+    }
+    setNotice('')
+
     const newTasks = tasks.filter((t) => t.id !== draggedTask.id)
     const columnTasks = newTasks
       .filter((t) => t.status === targetStatus)
@@ -109,6 +137,26 @@ export function KanbanBoard({ tasks, members, onTasksChange, onNewTask }: Kanban
     setDragOverColumn(null)
     setDragOverTaskId(null)
     dragCounter.current = {}
+  }
+
+  const handleQuickMove = async (task: Task) => {
+    const next = NEXT_STATUS[task.status]
+    if (!next) return
+    const limit = settings.wipLimits[next]
+    if (limit && tasks.filter((t) => t.status === next).length >= limit) {
+      setNotice(`${LABELS[next]} is full (${limit} of ${limit}). Finish a card there first.`)
+      return
+    }
+    setNotice('')
+    try {
+      await api.activity(`moved "${task.title}" to ${LABELS[next]}`, user?.name ?? '')
+    } catch (error) {
+      console.error(error)
+    }
+    onTasksChange((prev) => {
+      const order = prev.filter((t) => t.status === next).reduce((max, t) => Math.max(max, t.order), -1) + 1
+      return [...prev.filter((t) => t !== task), { ...task, status: next, order }]
+    })
   }
 
   const handleDeleteTask = (taskId: string) => {
@@ -171,10 +219,17 @@ export function KanbanBoard({ tasks, members, onTasksChange, onNewTask }: Kanban
           </Button>
         </div>
 
+        {notice && (
+          <p className="rounded-md border border-destructive/30 bg-destructive/5 px-3 py-2 text-sm text-destructive" data-testid="board-notice">
+            {notice}
+          </p>
+        )}
+
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
           {COLUMNS.map((column) => {
             const columnTasks = getColumnTasks(column.id)
             const isOver = dragOverColumn === column.id
+            const limit = settings.wipLimits[column.id]
 
             return (
               <div
@@ -182,6 +237,7 @@ export function KanbanBoard({ tasks, members, onTasksChange, onNewTask }: Kanban
                 data-agrune-demo="kanban-column"
                 data-status={column.id}
                 data-column-label={column.label}
+                data-wip-limit={limit ?? undefined}
                 role="region"
                 aria-label={`${column.label} column`}
                 className={cn(
@@ -201,6 +257,11 @@ export function KanbanBoard({ tasks, members, onTasksChange, onNewTask }: Kanban
                     <span className="text-sm text-muted-foreground font-medium">
                       {columnTasks.length}
                     </span>
+                    {limit && (
+                      <span className="text-xs text-muted-foreground" data-testid={`column-limit-${column.id}`}>
+                        / {limit} max
+                      </span>
+                    )}
                   </div>
                 </div>
 
@@ -235,6 +296,23 @@ export function KanbanBoard({ tasks, members, onTasksChange, onNewTask }: Kanban
                               {task.title}
                             </CardTitle>
                           </div>
+                          <div className="flex shrink-0 items-center">
+                          {NEXT_STATUS[task.status] && (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              aria-label={`Move ${task.title} to ${LABELS[NEXT_STATUS[task.status]!]}`}
+                              data-agrune-demo="task-quick-move"
+                              className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity shrink-0"
+                              onDoubleClick={(e) => e.stopPropagation()}
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                handleQuickMove(task)
+                              }}
+                            >
+                              <ArrowRight className="h-3 w-3 text-muted-foreground" />
+                            </Button>
+                          )}
                           <Button
                             variant="ghost"
                             size="icon"
@@ -247,6 +325,7 @@ export function KanbanBoard({ tasks, members, onTasksChange, onNewTask }: Kanban
                           >
                             <Trash2 className="h-3 w-3 text-muted-foreground" />
                           </Button>
+                          </div>
                         </div>
                       </CardHeader>
                       <CardContent className="p-3 pt-1">
@@ -254,12 +333,23 @@ export function KanbanBoard({ tasks, members, onTasksChange, onNewTask }: Kanban
                           {task.description}
                         </p>
                         <div className="flex items-center justify-between">
-                          <Badge
-                            variant="outline"
-                            className={cn('text-[10px] px-1.5 py-0', PRIORITY_COLORS[task.priority])}
-                          >
-                            {task.priority}
-                          </Badge>
+                          <div className="flex items-center gap-1">
+                            <Badge
+                              variant="outline"
+                              className={cn('text-[10px] px-1.5 py-0', PRIORITY_COLORS[task.priority])}
+                            >
+                              {task.priority}
+                            </Badge>
+                            {settings.showOverdue && isOverdue(task) && (
+                              <Badge
+                                variant="outline"
+                                data-agrune-demo="task-overdue"
+                                className="text-[10px] px-1.5 py-0 border-red-200 bg-red-50 text-red-700"
+                              >
+                                Overdue
+                              </Badge>
+                            )}
+                          </div>
                           <span className="text-[10px] text-muted-foreground">
                             {task.assignee}
                           </span>
@@ -290,6 +380,7 @@ export function KanbanBoard({ tasks, members, onTasksChange, onNewTask }: Kanban
         task={selectedTask}
         open={selectedTask !== null}
         members={members}
+        user={user}
         allTasks={tasks}
         onOpenChange={(open) => {
           if (!open) setSelectedTaskId(null)

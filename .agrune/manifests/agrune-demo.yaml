@@ -1,0 +1,301 @@
+app: agrune-demo
+name: Project Manager
+desc: 태스크 보드·팀원·문서·워크플로우·메신저로 된 프로젝트 관리 데모. 위쪽 탭 다섯 개(tab-board, tab-members, tab-docs, tab-workflow, tab-messenger)로 화면을 바꾼다. 오른쪽 위 동그란 머리글자(account)가 계정 메뉴이고 그 안에 작업 공간 설정이 있다. 주소는 늘 / 이고 탭 상태·태스크·필터·메시지·로그인한 사람은 이 브라우저 localStorage에, 좋아요·첨부·설정은 서버(/api)에 남는다. /?reset=1로 열면 둘 다 처음 상태로 돌아간다.
+urls: [http://127.0.0.1:5173, http://localhost:5173]
+messages: ['p.text-destructive']
+
+common:
+  nav:
+    name: 메뉴
+    targets:
+      tab-board: { name: Board, sel: '[data-testid="nav-board-tab"]' }
+      tab-members: { name: Members, sel: '[data-testid="nav-members-tab"]' }
+      tab-docs: { name: Docs, sel: '[data-testid="nav-docs-tab"]' }
+      tab-workflow: { name: Workflow, sel: '[data-testid="nav-workflow-tab"]' }
+      tab-messenger: { name: Messenger, sel: '[data-testid="nav-messenger-tab"]' }
+  acct:
+    name: 계정
+    targets:
+      account: { name: 계정 메뉴, sel: '[data-testid="account-menu-button"]', desc: 로그인한 사람의 머리글자. 누르면 메뉴가 열린다 }
+      signed-in: { name: 로그인한 사람, sel: '[data-testid="account-user-name"]', in: account }
+      settings: { name: Workspace settings, sel: '[data-testid="account-menu-settings"]', in: account, desc: 작업 공간 설정 창을 연다 }
+      help: { name: Help, sel: '[data-testid="account-menu-help"]', in: account, desc: 도움말 문서를 새 탭으로 연다 }
+
+# 새 태스크 만들기 창. 보드의 New Task와 팀원 화면의 Ticket 두 곳에서 뜨므로 맨 위에 한 번만 적는다.
+# 세 단계가 같은 창 안에서 바뀐다. 단계마다 있는 것만 보이고 나머지는 optional.
+dialogs:
+  wizard:
+    name: 새 태스크 만들기
+    sel: 'role=dialog[name="Create New Task"]'
+    desc: 1단계 기본 정보(title, assignee 필수) → next → 2단계 상세(description 필수) → next → 3단계 확인 → create. 지금 몇 단계인지는 step에 나온다.
+    targets:
+      step: { name: 지금 단계, sel: 'role=dialog[name="Create New Task"] >> text=/^Step \d of 3/' }
+      # 1단계
+      title: { name: Task Name, sel: '#task-name', optional: true, desc: 필수. 100자 안 }
+      status: { name: Status, sel: '#task-status', optional: true, desc: 처음에는 To Do. 고른 상태의 칸에 만들어진다 }
+      priority: { name: Priority, sel: '#task-priority', optional: true }
+      assignee: { name: Assignee, sel: '[data-testid="wizard-assignee-combobox"]', optional: true, desc: 필수. 재직(active) 팀원만 나온다. 선택지는 "이름 (역할)" 꼴이라 이름만 넣어도 된다 }
+      assignee-search: { name: 담당자 검색, sel: '#wizard-assignee-search', kind: combo, options: '[data-agrune-demo="wizard-assignee-option"]', in: assignee, optional: true, desc: assignee를 연 상태에서 이름이나 역할을 쳐서 고르는 다른 길. 맞는 이름이 없으면 실패하면서 Escape가 만들기 창까지 닫아 적은 것이 사라진다. 이름이 확실할 때만 쓰고 아니면 select assignee }
+      # 2단계
+      description: { name: Description, sel: '#task-description', optional: true, desc: 필수 }
+      due: { name: Due Date, sel: '#task-due-date', optional: true, desc: YYYY-MM-DD }
+      hours: { name: Estimated Hours, sel: '#task-hours', optional: true, desc: 0 이상 999 이하 숫자 }
+      preview-toggle: { name: 설명 미리보기, sel: '[data-testid="wizard-description-preview-toggle"]', optional: true }
+      preview: { name: 미리보기 글, sel: '[data-agrune-demo="description-preview"]', optional: true, desc: preview-toggle을 켜야 나온다 }
+      tags-count: { name: 고른 태그 수, sel: 'role=dialog[name="Create New Task"] >> text=/^\d+ tags? selected$/', optional: true }
+      advanced: { name: 고급 설정, sel: '[data-testid="wizard-advanced-toggle"]', optional: true }
+      points: { name: Story Points, sel: '#task-story-points', in: advanced, optional: true }
+      reviewer: { name: Reviewer, sel: '#task-reviewer', in: advanced, optional: true, desc: 담당자 목록에서 고르는 칸이 아니라 이름을 글로 적는다 }
+      # 3단계
+      summary: { name: 만들 내용, sel: 'role=dialog[name="Create New Task"] >> div.rounded-lg.border', optional: true, desc: 전부 보려면 agrune snapshot summary }
+      # 단계 이동
+      back: { name: Back, sel: '[data-testid="wizard-back-button"]', optional: true }
+      next: { name: Next, sel: '[data-testid="wizard-next-button"]', optional: true, desc: 빠진 필수 칸이 있으면 넘어가지 못하고 오류 글이 나온다 }
+      create: { name: Create Task, sel: '[data-testid="wizard-create-task-button"]', optional: true, desc: 누르면 창이 닫히고 고른 상태의 칸 맨 아래에 카드가 생긴다 }
+      close: { name: 닫기, sel: '[data-testid="wizard-close-button"]', desc: 만들지 않고 닫는다. 적은 것은 버려진다 }
+    lists:
+      tags:
+        name: 태그
+        rows: '[data-agrune-demo="wizard-tag"]'
+        label: '@data-tag'
+        desc: 누를 때마다 켜고 끈다. 켜졌는지는 줄에 안 나오고 tags-count와 3단계에서 본다
+        limit: 10
+
+  settings:
+    name: 작업 공간 설정
+    sel: 'role=dialog[name="Workspace Settings"]'
+    desc: 탭 네 개(Profile · Notifications · Board · Advanced). 탭마다 저장 단추가 따로 있다.
+    targets:
+      tab-profile: { name: Profile, sel: '[data-testid="settings-tab-profile"]' }
+      tab-notify: { name: Notifications, sel: '[data-testid="settings-tab-notifications"]' }
+      tab-board-settings: { name: Board, sel: '[data-testid="settings-tab-board"]' }
+      tab-advanced: { name: Advanced, sel: '[data-testid="settings-tab-advanced"]' }
+      user: { name: Signed in as, sel: '#settings-user', optional: true, desc: 이 사람으로 좋아요·의견·첨부를 한다. 재직 팀원만 }
+      save-profile: { name: Save profile, sel: '[data-testid="settings-profile-save"]', optional: true }
+      notify-mentions: { name: Mentions, sel: '#settings-notify-mentions', optional: true }
+      notify-daily: { name: Daily digest, sel: '#settings-notify-dailyDigest', optional: true }
+      notify-weekly: { name: Weekly report, sel: '#settings-notify-weeklyReport', optional: true }
+      save-notify: { name: Save notifications, sel: '[data-testid="settings-notifications-save"]', optional: true }
+      show-overdue: { name: Highlight overdue tasks, sel: '#settings-show-overdue', optional: true }
+      column-rules: { name: Column rules, sel: '[data-testid="settings-column-rules-toggle"]', optional: true, desc: 접혀 있다. 열면 칸마다 카드 수 한도(WIP limit) 칸이 나온다 }
+      wip-todo: { name: To Do 한도, sel: '#settings-wip-todo', in: column-rules, optional: true, desc: 비우면 한도 없음 }
+      wip-doing: { name: In Progress 한도, sel: '#settings-wip-in-progress', in: column-rules, optional: true, desc: 비우면 한도 없음 }
+      wip-review: { name: In Review 한도, sel: '#settings-wip-in-review', in: column-rules, optional: true, desc: 비우면 한도 없음 }
+      wip-done: { name: Done 한도, sel: '#settings-wip-done', in: column-rules, optional: true, desc: 비우면 한도 없음 }
+      save-board: { name: Save board settings, sel: '[data-testid="settings-board-save"]', optional: true }
+      export: { name: Export board, sel: '[data-testid="settings-export-board"]', optional: true, desc: 보드를 board-export.json으로 내려받는다 }
+      import: { name: Import board, sel: '[data-testid="settings-import-board"]', optional: true, desc: 파일 고르기 창이 뜬다. agrune upload <파일>로 json을 고른다 }
+      board-data-note: { name: 내보내기·가져오기 결과, sel: '[data-testid="settings-board-data-message"]', optional: true }
+      clear-board: { name: Clear board, sel: '[data-testid="settings-clear-board"]', optional: true, desc: 보드의 카드를 모두 없앤다 }
+      saved: { name: 저장됨 표시, sel: '[data-testid="settings-saved"]', optional: true }
+      settings-close: { name: 닫기, sel: '[data-testid="settings-close-button"]' }
+
+screens:
+  board:
+    name: 칸반 보드
+    path: /
+    when: '[data-testid="nav-board-tab"][aria-selected="true"]'
+    map: false
+    desc: 태스크 카드는 네 칸(To Do, In Progress, In Review, Done)에 있고 칸마다 목록이다. 카드는 agrune dblclick <칸>.<번호>로 상세를 연다(한 번 누르는 것은 아무 일도 없다). 칸 사이로는 agrune drag <칸>.<번호> to-<칸>으로 옮긴다.
+    targets:
+      new: { name: New Task, sel: '[data-testid="board-new-task-button"]', desc: 새 태스크 만들기 창을 연다 }
+      notice: { name: 보드 알림, sel: '[data-testid="board-notice"]', optional: true, desc: 칸이 한도만큼 차서 옮기지 못했을 때 나온다 }
+      limit-doing: { name: In Progress 한도, sel: '[data-testid="column-limit-in-progress"]', optional: true, desc: 설정에서 한도를 정했을 때만 나온다 }
+      to-todo: { name: To Do 칸, sel: '[data-agrune-demo="kanban-column"][data-status="todo"] > div:first-child', desc: 카드를 끌어 놓는 곳. 글은 칸 이름과 카드 수 }
+      to-doing: { name: In Progress 칸, sel: '[data-agrune-demo="kanban-column"][data-status="in-progress"] > div:first-child', desc: 카드를 끌어 놓는 곳. 글은 칸 이름과 카드 수 }
+      to-review: { name: In Review 칸, sel: '[data-agrune-demo="kanban-column"][data-status="in-review"] > div:first-child', desc: 카드를 끌어 놓는 곳. 글은 칸 이름과 카드 수 }
+      to-done: { name: Done 칸, sel: '[data-agrune-demo="kanban-column"][data-status="done"] > div:first-child', desc: 카드를 끌어 놓는 곳. 글은 칸 이름과 카드 수 }
+    lists:
+      todo:
+        name: To Do
+        rows: '[data-agrune-demo="kanban-column"][data-status="todo"] [data-agrune-demo="task-card"]'
+        label: '@data-task-title'
+        cols: { 우선순위: 'p + div > div > div:first-child', 마감: '[data-agrune-demo="task-overdue"]', 담당: 'p + div > span' }
+        actions:
+          del-todo: { name: 지우기, sel: 'button[aria-label^="Delete task"]', desc: 묻지 않고 바로 지운다 }
+          mv-todo: { name: 다음 칸으로, sel: '[data-agrune-demo="task-quick-move"]', desc: 카드를 오른쪽 칸으로 하나 옮긴다 }
+      doing:
+        name: In Progress
+        rows: '[data-agrune-demo="kanban-column"][data-status="in-progress"] [data-agrune-demo="task-card"]'
+        label: '@data-task-title'
+        cols: { 우선순위: 'p + div > div > div:first-child', 마감: '[data-agrune-demo="task-overdue"]', 담당: 'p + div > span' }
+        actions:
+          del-doing: { name: 지우기, sel: 'button[aria-label^="Delete task"]', desc: 묻지 않고 바로 지운다 }
+          mv-doing: { name: 다음 칸으로, sel: '[data-agrune-demo="task-quick-move"]', desc: 카드를 오른쪽 칸으로 하나 옮긴다 }
+      review:
+        name: In Review
+        rows: '[data-agrune-demo="kanban-column"][data-status="in-review"] [data-agrune-demo="task-card"]'
+        label: '@data-task-title'
+        cols: { 우선순위: 'p + div > div > div:first-child', 마감: '[data-agrune-demo="task-overdue"]', 담당: 'p + div > span' }
+        actions:
+          del-review: { name: 지우기, sel: 'button[aria-label^="Delete task"]', desc: 묻지 않고 바로 지운다 }
+          mv-review: { name: 다음 칸으로, sel: '[data-agrune-demo="task-quick-move"]', desc: 카드를 오른쪽 칸으로 하나 옮긴다 }
+      done:
+        name: Done
+        rows: '[data-agrune-demo="kanban-column"][data-status="done"] [data-agrune-demo="task-card"]'
+        label: '@data-task-title'
+        cols: { 우선순위: 'p + div > div > div:first-child', 마감: '[data-agrune-demo="task-overdue"]', 담당: 'p + div > span' }
+        actions:
+          del-done: { name: 지우기, sel: 'button[aria-label^="Delete task"]', desc: 묻지 않고 바로 지운다 }
+    dialogs:
+      detail:
+        name: 태스크 상세
+        sel: 'role=dialog[name="Task Details"]'
+        desc: 칸을 고친 뒤 save를 눌러야 저장된다. comment 게시(post)와 related 연결은 저장과 상관없이 바로 반영되고 cancel을 눌러도 남는다. 창이 이 대화상자보다 낮으면(약 1050px 미만) save·cancel이 화면 밖이라 눌리지 않는다. 그때는 agrune resize 1280 1400.
+        targets:
+          task-id: { name: 태스크 번호, sel: 'role=dialog[name="Task Details"] >> h3 + p', desc: '"task-N · Created 날짜" 꼴' }
+          like: { name: 좋아요, sel: '[data-testid="task-like-button"]', desc: 누르면 켜고 다시 누르면 끈다. 한 사람이 좋아요·싫어요 중 하나만 }
+          like-count: { name: 좋아요 수, sel: '[data-testid="task-like-count"]' }
+          dislike: { name: 싫어요, sel: '[data-testid="task-dislike-button"]', desc: 누르면 켜고 다시 누르면 끈다 }
+          dislike-count: { name: 싫어요 수, sel: '[data-testid="task-dislike-count"]' }
+          attach: { name: Add files, sel: '[data-testid="task-attach-button"]', desc: 파일 고르기 창이 뜬다. 이어서 agrune upload <파일…>로 고른다. 여러 개를 한 번에 골라도 된다. 태스크마다 5개, 하나에 2 MB까지 }
+          attach-count: { name: 첨부 수, sel: '[data-testid="task-attachment-count"]' }
+          edit-title: { name: Task Name, sel: '#task-detail-title', desc: 필수 }
+          edit-assignee: { name: Assignee, sel: '#task-detail-assignee', desc: 필수. 선택지는 "이름 (역할)" 꼴이라 이름만 넣어도 된다 }
+          edit-status: { name: Status, sel: '#task-detail-status', desc: 바꾸고 save를 누르면 그 칸의 맨 아래로 옮겨진다 }
+          edit-priority: { name: Priority, sel: '#task-detail-priority' }
+          edit-due: { name: Due Date, sel: '#task-detail-due-date', desc: YYYY-MM-DD }
+          edit-desc: { name: Description, sel: '#task-detail-description', desc: 필수 }
+          edit-hours: { name: Est. Hours, sel: '#task-detail-hours', desc: 0 이상 999 이하 숫자 }
+          comment-to: { name: Addressed to, sel: '#task-detail-comment-author', desc: 의견을 받을 사람. 안 고르면 Anyone }
+          comment: { name: Comment, sel: '#task-detail-comment' }
+          post: { name: Post Comment, sel: '[data-testid="task-detail-add-comment"]', desc: comment를 쓰기 전에는 비활성 }
+          related: { name: Related Tickets, sel: '#task-detail-related', desc: 고르는 순간 연결된다 }
+          save: { name: Save Changes, sel: '[data-testid="task-detail-save-button"]', desc: 필수 칸이 비면 저장되지 않고 오류 글이 나온다 }
+          cancel: { name: Cancel, sel: '[data-testid="task-detail-cancel-button"]', desc: 고친 칸은 버린다 }
+          edit-close: { name: 닫기, sel: '[data-testid="task-detail-close-button"]' }
+        lists:
+          edit-tags:
+            name: 태그
+            rows: '[data-agrune-demo="task-detail-tag"]'
+            label: '@data-tag'
+            desc: 누를 때마다 켜고 끈다. 켜졌는지는 줄에 안 나온다(위 개요 카드의 배지로 본다). save를 눌러야 저장된다
+            limit: 10
+          comments:
+            name: 남긴 의견
+            rows: '[data-agrune-demo="task-detail-comment"]'
+            label: 'p.text-foreground'
+            cols: { 받는 사람: 'p.text-primary' }
+          related-items:
+            name: 연결된 태스크
+            rows: '[data-agrune-demo="task-detail-related-item"]'
+          files:
+            name: 첨부 파일
+            rows: '[data-agrune-demo="task-attachment"]'
+            label: '@data-file-name'
+            cols: { 크기·올린 사람: 'p.text-muted-foreground' }
+            actions:
+              download: { name: 내려받기, sel: '[data-agrune-demo="task-attachment-download"]', desc: 파일을 내려받는다 }
+              remove-file: { name: 첨부 빼기, sel: '[data-agrune-demo="task-attachment-remove"]', desc: 묻지 않고 바로 뺀다 }
+
+  members:
+    name: 팀원
+    path: /
+    when: '[data-testid="nav-members-tab"][aria-selected="true"]'
+    map: false
+    desc: 팀원 표. 한 쪽에 page-size 줄(처음 5)만 보이고 pages·page-prev·page-next로 쪽을 넘긴다. 검색과 필터는 모든 쪽에 걸쳐 거른다.
+    targets:
+      search: { name: 검색, sel: '[data-testid="member-search-input"]', desc: 이름·이메일·기술·부서로 거른다 }
+      role-filter: { name: 역할 필터, sel: '[data-testid="member-role-filter"]' }
+      status-filter: { name: 상태 필터, sel: '[data-testid="member-status-filter"]' }
+      count: { name: 팀원 수, sel: 'text=/^\d+ members?$/' }
+      range: { name: 지금 쪽 범위, sel: 'text=/^Showing \d+ to \d+ of \d+$/' }
+      page-size: { name: 한 쪽 줄 수, sel: '[data-testid="member-page-size"]', desc: 5 또는 10 }
+      page-prev: { name: Previous, sel: '[data-testid="member-pagination-previous"]' }
+      page-next: { name: Next, sel: '[data-testid="member-pagination-next"]' }
+    lists:
+      members:
+        name: 팀원
+        rows: '[data-agrune-demo="member-row"]'
+        label: 'td:first-child'
+        cols: { 이메일: 'td:nth-child(2)', 역할: 'td:nth-child(3)', 기술·부서: 'td:nth-child(4)', 상태: 'td:nth-child(5)' }
+        actions:
+          ticket: { name: Ticket, sel: '[data-agrune-demo="member-create-ticket"]', desc: 이 사람을 담당자로 채운 새 태스크 만들기 창을 연다 }
+          message: { name: 메시지, sel: '[data-agrune-demo="member-message"]', desc: 메신저 탭으로 넘어가 이 사람과의 대화를 연다 }
+      pages:
+        name: 쪽 번호
+        rows: '[data-agrune-demo="member-page-button"]'
+
+  docs:
+    name: 문서
+    path: /
+    when: '[data-testid="nav-docs-tab"][aria-selected="true"]'
+    map: false
+    desc: 문서 네 개 중 하나를 아래 iframe에서 본다. 내용은 doc-title(제목), doc-text(본문 앞 2000자), doc-sections(절별), doc-table(표)로 읽는다.
+    targets:
+      current: { name: 지금 보는 문서, sel: '.border-b span.font-medium' }
+      refresh: { name: 새로고침, sel: '[data-testid="doc-refresh-button"]' }
+      expand: { name: 펼치기·줄이기, sel: '[data-testid="doc-expand-toggle"]' }
+      new-tab: { name: 새 탭에서 열기, sel: '[data-testid="doc-open-new-tab"]', desc: 문서만 새 브라우저 탭으로 연다. 이 화면은 그대로이고 열린 탭은 agrune tab-list 로 본다 }
+      doc-title: { name: 문서 제목, sel: 'iframe[data-testid="doc-iframe"] >> internal:control=enter-frame >> h1' }
+      doc-text: { name: 문서 본문, sel: 'iframe[data-testid="doc-iframe"] >> internal:control=enter-frame >> body', desc: 전부 읽으려면 agrune snapshot doc-text }
+    lists:
+      docs:
+        name: 문서 목록
+        rows: '[data-testid^="doc-card-"]'
+        label: '[class*="tracking-tight"] > span'
+        cols: { 분류: '[class*="tracking-tight"] > div', 설명: 'p' }
+        desc: 줄을 누르면 그 문서가 열린다
+      doc-table:
+        name: 문서 안의 표
+        rows: 'iframe[data-testid="doc-iframe"] >> internal:control=enter-frame >> tr'
+        label: 'th, td'
+        cols: { 값: 'td:nth-child(2)', 그 다음 칸: 'td:nth-child(3)' }
+        desc: 문서에 표가 있을 때만 줄이 나온다. 첫 칸이 이름, 그 옆 칸들이 값이다. 머리 줄(PARAMETER, MILESTONE)도 한 줄로 나온다
+      doc-sections:
+        name: 문서 절
+        rows: 'iframe[data-testid="doc-iframe"] >> internal:control=enter-frame >> .section, .step, .tip'
+        label: 'h2, .step-title, .tip-title'
+        cols: { 내용: '' }
+        desc: 긴 문서는 agrune snapshot doc-sections 로 절마다 앞 600자를 읽는다
+
+  workflow:
+    name: 워크플로우
+    path: /
+    when: '[data-testid="nav-workflow-tab"][aria-selected="true"]'
+    map: false
+    desc: 노드와 연결선 편집기. 같은 노드 쌍은 한 번만 연결되고 선을 누르면 지워진다. 탭을 나가면 처음 상태로 돌아간다.
+    targets:
+      zoom-in: { name: Zoom in, sel: '.agrune-workflow-flow .react-flow__controls-zoomin', desc: 확대하면 일부 노드가 화면 밖으로 나가 눌리지 않는다. 그때는 fit }
+      zoom-out: { name: Zoom out, sel: '.agrune-workflow-flow .react-flow__controls-zoomout' }
+      fit: { name: Fit view, sel: '.agrune-workflow-flow .react-flow__controls-fitview' }
+      interactivity: { name: Toggle Interactivity, sel: 'button[aria-label="Toggle Interactivity"]', desc: 켜고 끈 것이 화면 글로는 안 나온다 }
+    lists:
+      nodes:
+        name: 노드
+        desc: 다른 노드 위로 끌면 그 노드가 있던 자리로 옮겨진다(겹치면 위에 놓인 노드가 잡힌다). 위치는 화면 글로 안 나온다
+        rows: '[data-agrune-demo="workflow-node"]'
+        label: 'div:first-child'
+        cols: { 설명: ':scope > div:nth-child(2)', 종류: '@data-workflow-node-type', 연결선에서 쓰는 이름: '@data-workflow-node-id' }
+        actions:
+          handle-out: { name: 나가는 연결점, sel: '.react-flow__handle.source', desc: 다른 노드의 handle-in 위로 끌어 연결한다 }
+          handle-in: { name: 들어오는 연결점, sel: '.react-flow__handle.target' }
+      edges:
+        name: 연결선
+        rows: '.agrune-workflow-flow .react-flow__edge'
+        label: '@aria-label'
+        actions:
+          del-edge: { name: 지우기, sel: ':scope', desc: 누르면 이 연결이 바로 지워진다 }
+
+  messenger:
+    name: 메신저
+    path: /
+    when: '[data-testid="nav-messenger-tab"][aria-selected="true"]'
+    map: false
+    desc: 팀원과 1:1 대화. 기존 메시지는 데모 데이터다. 개발 서버만 띄우면 자동 답장 API가 없어 보낸 메시지에 답이 오지 않는다.
+    targets:
+      chat-with: { name: 지금 대화 상대, sel: 'div.border-b.px-4.py-3 p.font-medium', optional: true }
+      message: { name: Message, sel: '[data-testid="messenger-input"]', optional: true, desc: 대화 상대를 먼저 골라야 나온다. Enter로도 보낸다 }
+      send: { name: Send, sel: '[data-testid="messenger-send-button"]', optional: true, desc: 글을 쓰기 전에는 비활성 }
+    lists:
+      chats:
+        name: 대화 상대
+        rows: '[data-agrune-demo="messenger-conversation"]'
+        label: 'p:first-child'
+        cols: { 마지막: 'p:nth-child(2)' }
+        desc: 줄을 누르면 그 사람과의 대화가 열린다. 마지막은 마지막 메시지이고 대화가 없으면 역할
+      thread:
+        name: 대화 내용
+        rows: '[data-agrune-demo="messenger-message"]'
+        label: 'div.whitespace-pre-wrap'
+        cols: { 보낸 사람: 'p.text-xs', 시각: 'span.pb-1' }

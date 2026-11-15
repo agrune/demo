@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { KanbanBoard } from '@/components/features/KanbanBoard'
 import { TaskWizard } from '@/components/features/TaskWizard'
@@ -9,8 +9,18 @@ import { useLocalStorage } from '@/hooks/useLocalStorage'
 import { SEED_TASKS, SEED_MEMBERS, SEED_MESSAGES } from '@/seed-data'
 import { LayoutDashboard, KanbanSquare, Users, FileText, Workflow, MessageSquare } from 'lucide-react'
 import { WorkflowEditor } from '@/components/features/WorkflowEditor'
+import { AccountMenu } from '@/components/features/AccountMenu'
+import { SettingsDialog } from '@/components/features/SettingsDialog'
+import { api, type BoardSettings } from '@/api'
 import { SEED_WORKFLOW_NODES, SEED_WORKFLOW_EDGES } from '@/seed-data'
 import type { Task, Member, ChatMessage } from '@/types'
+
+const DEFAULT_SETTINGS: BoardSettings = {
+  wipLimits: { todo: null, 'in-progress': null, 'in-review': null, done: null },
+  showOverdue: true,
+  notifications: { mentions: true, dailyDigest: false, weeklyReport: false },
+  language: 'en',
+}
 
 function App() {
   const [tasks, setTasks] = useLocalStorage<Task[]>('pm-tasks', SEED_TASKS)
@@ -20,6 +30,18 @@ function App() {
   const [activeTab, setActiveTab] = useLocalStorage<string>('pm-active-tab', 'board')
   const [wizardPrefillAssignee, setWizardPrefillAssignee] = useState<string>('')
   const [activeConversationId, setActiveConversationId] = useState<string | null>(null)
+  const [userId, setUserId] = useLocalStorage<string>('pm-user', 'member-1')
+  const [settings, setSettings] = useState<BoardSettings>(DEFAULT_SETTINGS)
+  const [settingsOpen, setSettingsOpen] = useState(false)
+  const user = members.find((m) => m.id === userId)
+
+  useEffect(() => {
+    api.settings().then(setSettings).catch((error) => console.error(error))
+  }, [])
+
+  const saveSettings = useCallback(async (patch: Partial<BoardSettings>) => {
+    setSettings(await api.saveSettings(patch))
+  }, [])
 
   const handleNewTask = useCallback(
     (taskData: Omit<Task, 'id' | 'order' | 'createdAt'>) => {
@@ -31,7 +53,7 @@ function App() {
         order: maxOrder + 1,
         createdAt: new Date().toISOString(),
       }
-      setTasks([...tasks, newTask])
+      setTasks((prev) => [...prev, newTask])
     },
     [tasks, setTasks]
   )
@@ -93,12 +115,13 @@ function App() {
         <div className="max-w-[1400px] mx-auto px-6 py-4">
           <div className="flex items-center gap-3">
             <LayoutDashboard className="h-6 w-6 text-primary" />
-            <div>
+            <div className="flex-1">
               <h1 className="text-xl font-bold tracking-tight">Project Manager</h1>
               <p className="text-sm text-muted-foreground">
                 Manage tasks, team members, and documentation
               </p>
             </div>
+            <AccountMenu user={user} onOpenSettings={() => setSettingsOpen(true)} />
           </div>
         </div>
       </header>
@@ -133,6 +156,8 @@ function App() {
             <KanbanBoard
               tasks={tasks}
               members={members}
+              settings={settings}
+              user={user}
               onTasksChange={setTasks}
               onNewTask={() => {
                 setWizardPrefillAssignee('')
@@ -178,7 +203,20 @@ function App() {
         onOpenChange={setWizardOpen}
         members={members}
         prefillAssignee={wizardPrefillAssignee}
+        userName={user?.name ?? ''}
         onSubmit={handleNewTask}
+      />
+
+      <SettingsDialog
+        open={settingsOpen}
+        onOpenChange={setSettingsOpen}
+        settings={settings}
+        onSaveSettings={saveSettings}
+        members={members}
+        userId={userId}
+        onChangeUser={setUserId}
+        tasks={tasks}
+        onTasksChange={setTasks}
       />
     </div>
   )

@@ -2,11 +2,13 @@ import http from 'node:http'
 import fs from 'node:fs'
 import path from 'node:path'
 import { execSync } from 'node:child_process'
+import { fileURLToPath } from 'node:url'
 import { FALLBACK_REPLY, npcReply, safeError } from './npc-reply.mjs'
+import { handleApi } from './demo-api.mjs'
 
 const HOST = '127.0.0.1'
 const PORT = 4178
-const DEMO_ROOT = '/Users/chenjing/dev/agrune/demo'
+const DEMO_ROOT = path.dirname(fileURLToPath(import.meta.url))
 const DIST_ROOT = path.join(DEMO_ROOT, 'dist')
 
 const MIME_TYPES = {
@@ -133,6 +135,8 @@ async function handleRequest(req, res) {
     await handleNpcReply(req, res)
     return
   }
+
+  if (await handleApi(req, res)) return
 
   if (req.method === 'GET' || req.method === 'HEAD') {
     serveStatic(req, res)

@@ -1,0 +1,4 @@
+endpoint,method,owner
+/api/tasks,GET,Diana Lee
+/api/tasks,POST,Diana Lee
+/api/members,GET,Bob Kim

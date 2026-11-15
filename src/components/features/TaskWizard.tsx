@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { api } from '@/api'
 import {
   Dialog,
   DialogContent,
@@ -33,6 +34,7 @@ interface TaskWizardProps {
   members: Member[]
   /** when opened from a member action, pre-fill the assignee */
   prefillAssignee?: string
+  userName: string
   onSubmit: (task: Omit<Task, 'id' | 'order' | 'createdAt'>) => void
 }
 
@@ -67,7 +69,7 @@ const INITIAL_DATA: WizardData = {
   reviewer: '',
 }
 
-export function TaskWizard({ open, onOpenChange, members, prefillAssignee, onSubmit }: TaskWizardProps) {
+export function TaskWizard({ open, onOpenChange, members, prefillAssignee, userName, onSubmit }: TaskWizardProps) {
   const [step, setStep] = useState<StepIndex>(0)
   const [errors, setErrors] = useState<WizardErrors>({})
   const [data, setData] = useState<WizardData>({ ...INITIAL_DATA })
@@ -132,7 +134,7 @@ export function TaskWizard({ open, onOpenChange, members, prefillAssignee, onSub
     if (step > 0) setStep((step - 1) as StepIndex)
   }
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     const taskData: Omit<Task, 'id' | 'order' | 'createdAt'> = {
       title: data.title.trim(),
       description: data.description.trim(),
@@ -150,6 +152,11 @@ export function TaskWizard({ open, onOpenChange, members, prefillAssignee, onSub
     }
     if (data.reviewer.trim()) taskData.reviewer = data.reviewer.trim()
 
+    try {
+      await api.activity(`created "${taskData.title}" for ${taskData.assignee}`, userName)
+    } catch (error) {
+      console.error(error)
+    }
     onSubmit(taskData)
     resetWizard()
     onOpenChange(false)
