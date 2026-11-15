@@ -80,6 +80,7 @@ export function TaskReactions({ taskId, userId }: TaskReactionsProps) {
         )}
       >
         <ThumbsUp className="h-3.5 w-3.5" />
+        {liked ? 'Liked' : 'Like'}
         <span data-testid="task-like-count">{up}</span>
       </button>
       <button
@@ -95,6 +96,7 @@ export function TaskReactions({ taskId, userId }: TaskReactionsProps) {
         )}
       >
         <ThumbsDown className="h-3.5 w-3.5" />
+        {disliked ? 'Disliked' : 'Dislike'}
         <span data-testid="task-dislike-count">{down}</span>
       </button>
     </div>

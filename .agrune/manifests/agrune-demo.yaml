@@ -144,7 +144,7 @@ screens:
         desc: 칸을 고친 뒤 save를 눌러야 저장된다. comment 게시(post)와 related 연결은 저장과 상관없이 바로 반영되고 cancel을 눌러도 남는다. 창이 이 대화상자보다 낮으면(약 1050px 미만) save·cancel이 화면 밖이라 눌리지 않는다. 그때는 agrune resize 1280 1400.
         targets:
           task-id: { name: 태스크 번호, sel: 'role=dialog[name="Task Details"] >> h3 + p', desc: '"task-N · Created 날짜" 꼴' }
-          like: { name: 좋아요, sel: '[data-testid="task-like-button"]', desc: 누르면 켜고 다시 누르면 끈다. 한 사람이 좋아요·싫어요 중 하나만 }
+          like: { name: 좋아요, sel: '[data-testid="task-like-button"]', desc: 누르면 켜고(글이 Liked로 바뀜) 다시 누르면 끈다. 한 사람이 좋아요·싫어요 중 하나만 }
           like-count: { name: 좋아요 수, sel: '[data-testid="task-like-count"]' }
           dislike: { name: 싫어요, sel: '[data-testid="task-dislike-button"]', desc: 누르면 켜고 다시 누르면 끈다 }
           dislike-count: { name: 싫어요 수, sel: '[data-testid="task-dislike-count"]' }

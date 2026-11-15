@@ -13,12 +13,15 @@ export function TaskAttachments({ taskId, userName }: TaskAttachmentsProps) {
   const [files, setFiles] = useState<Attachment[]>([])
   const [uploading, setUploading] = useState(0)
   const [error, setError] = useState('')
+  const [loaded, setLoaded] = useState(false)
   const input = useRef<HTMLInputElement | null>(null)
 
   useEffect(() => {
     let live = true
     api.attachments(taskId).then((list) => {
-      if (live) setFiles(list)
+      if (!live) return
+      setFiles(list)
+      setLoaded(true)
     })
     return () => {
       live = false
@@ -45,7 +48,7 @@ export function TaskAttachments({ taskId, userName }: TaskAttachmentsProps) {
   }
 
   return (
-    <div className="space-y-2" data-agrune-demo="task-attachments">
+    <div className="space-y-2" data-agrune-demo="task-attachments" aria-busy={!loaded || uploading > 0}>
       <div className="flex items-center justify-between">
         <Label className="flex items-center gap-1.5">
           <Paperclip className="h-3.5 w-3.5" />
