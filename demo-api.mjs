@@ -207,7 +207,7 @@ export async function handleApi(req, res) {
   const p = url.pathname
   let m
   try {
-    if (p === '/api/reset' && req.method === 'POST') { seed(); send(res, 200, { ok: true }) }
+    if (p === '/api/reset' && req.method === 'POST') { seed(); res.setHeader('connection', 'close'); send(res, 200, { ok: true }) }
     else if (p === '/api/state') send(res, 200, load())
     else if (p === '/api/reactions') await reactions(req, res, url)
     else if ((m = /^\/api\/tasks\/([^/]+)\/attachments$/.exec(p))) {
